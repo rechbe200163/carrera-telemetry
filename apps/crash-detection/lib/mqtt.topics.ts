@@ -1,8 +1,5 @@
 export const Topics = {
-  exitTurnEvent: (sector = '+', lane = '+', turn = '+') =>
-    `track/exit/sector/${sector}/lane/${lane}/turn/${turn}/`,
-  entryTurnEvent: (sector = '+', lane = '+', turn = '+') =>
-    `track/entry/sector/${sector}/lane/${lane}/turn/${turn}/`,
+  trackReedEvent: 'track/reed/event/',
   flagEvent: (sector = '+', flag = '+') =>
     `flag/sector/${sector}/flag/${flag}/`,
 } as const;

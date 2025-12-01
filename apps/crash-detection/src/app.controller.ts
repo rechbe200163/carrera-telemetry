@@ -14,15 +14,4 @@ export class AppController {
   health(): number {
     return this.appService.health();
   }
-
-  @EventPattern(Topics.entryTurnEvent())
-  async handleEntryTurnEvent(data: TrackReedEvent) {
-    this.logger.debug(`Received entry turn event: ${JSON.stringify(data)}`);
-    // Handle the entry turn event logic here
-  }
-
-  @EventPattern(Topics.exitTurnEvent())
-  async handleExitTurnEvent(data: any) {
-    this.logger.debug(`Received exit turn event: ${JSON.stringify(data)}`);
-  }
 }

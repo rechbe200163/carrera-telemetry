@@ -26,12 +26,15 @@ client.on('connect', () => {
 
   setInterval(() => {
     const payload = {
-      carId: 1,
-      speed: Math.floor(Math.random() * 50),
+      deviceId: 1,
+      sectorId: 3,
+      laneId: 1,
+      turnId: 8,
+      isExit: Math.random() < 0.5,
       timestamp: Date.now(),
     };
 
-    const topic = 'test/telemetry';
+    const topic = 'track/entry/sector/3/lane/1/turn/8/';
     client.publish(topic, JSON.stringify(payload));
     console.log(`➡️  Published to ${topic}:`, payload);
   }, 1000);
