@@ -6,10 +6,8 @@ import { Logger } from '@nestjs/common';
 
 @Controller()
 export class AppController {
-  constructor(
-    private readonly appService: AppService,
-    private readonly logger: Logger,
-  ) {}
+  constructor(private readonly appService: AppService) {}
+  private readonly logger = new Logger(AppController.name, { timestamp: true });
 
   @EventPattern(Topics.entryTurnEvent())
   async handleEntryTurnEvent(data: any) {

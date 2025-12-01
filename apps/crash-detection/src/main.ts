@@ -1,9 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ConsoleLogger } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new ConsoleLogger({
+      colors: true,
+      logLevels: ['log', 'error', 'warn', 'debug', 'verbose'],
+      prefix: '[CrashDetection]',
+    }),
+  });
 
   app.enableCors({
     origin: ['http://localhost:3000'], // dein Next-Dev
@@ -15,10 +22,10 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.MQTT,
     options: {
-      url: process.env.MQTT_URL ?? 'mqtt://localhost:1883',
-      clientId: process.env.MQTT_CLIENT_ID ?? 'carrera-telemetry-api',
-      username: process.env.MQTT_USERNAME,
-      password: process.env.MQTT_PASSWORD,
+      host: process.env.MQTT_HOST || 'localhost',
+      port: Number(process.env.MQTT_PORT) || 1883,
+      username: process.env.MQTT_USER,
+      password: process.env.MQTT_PASS,
     },
   });
   await app.startAllMicroservices();

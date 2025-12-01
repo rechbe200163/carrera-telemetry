@@ -7,7 +7,7 @@ function sanitizeHost(raw: string): string {
     .replace(/\/$/, '');
 }
 
-let rawHost = 'https://mqtt.mrhost.uk';
+let rawHost = '10.0.0.166';
 const MQTT_HOST = sanitizeHost(rawHost);
 const MQTT_PORT = process.env.MQTT_PORT ?? '1883';
 const MQTT_USER = 'o3FdplPaEdlZlThL';
