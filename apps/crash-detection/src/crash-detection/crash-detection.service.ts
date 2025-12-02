@@ -1,8 +1,10 @@
 // crash-detection/crash-detection.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TrackReedEvent } from 'lib/events.types';
+import { CustomPrismaService } from 'nestjs-prisma';
+import { PrismaClient } from 'prisma/src/generated/client';
 
-const HARD_TIMEOUT_MS = 3000;
+const HARD_TIMEOUT_MS = 5000;
 
 interface OpenPassage {
   deviceId: string;
@@ -19,7 +21,10 @@ export class CrashDetectionService {
   // key: deviceId:sectorId:laneId:turnId -> OpenPassage
   private openPassages = new Map<string, OpenPassage>();
 
-  constructor() {
+  constructor(
+    @Inject('PrismaServiceAuth') // 👈 use unique name to reference
+    private prisma: CustomPrismaService<PrismaClient>, //
+  ) {
     // private readonly sectorPassageRepo: SectorPassageRepository,
     // TODO: hier dein Prisma/Repository injecten
     // Watchdog für HardTimeouts
@@ -35,11 +40,15 @@ export class CrashDetectionService {
     return `${ev.deviceId}:${ev.sectorId}:${ev.laneId}:${ev.turnId}`;
   }
 
+  private toCurveId(sectorId: number, turnId: number): string {
+    return `${sectorId}:${turnId}`;
+  }
+
   /**
    * Wird vom Controller aufgerufen mit dem MQTT-Payload
    */
   async handleTrackReedEvent(event: TrackReedEvent) {
-    const ts = event.ts ?? Date.now();
+    const ts = Date.now();
     const key = this.key(event);
     const existing = this.openPassages.get(key);
 
@@ -152,6 +161,19 @@ export class CrashDetectionService {
     //   label: p.label,
     //   labelSource: p.labelSource,
     // });
+
+    await this.prisma.client.sector_passage.create({
+      data: {
+        ts: new Date(p.entryTs),
+        lane: p.laneId,
+        curve_id: this.toCurveId(p.sectorId, p.turnId),
+        entry_ts: new Date(p.entryTs),
+        exit_ts: p.exitTs ? new Date(p.exitTs) : null,
+        sector_time_ms: p.sectorTimeMs,
+        label: p.label,
+        label_source: p.labelSource,
+      },
+    });
 
     this.logger.debug(`Saving passage: ${JSON.stringify(p)}`);
   }

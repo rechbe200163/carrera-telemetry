@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client"
+  output = "./src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["telemetry"]
+}
+
+model sector_passage {
+  id             String    @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ts             DateTime  @db.Timestamptz(6)
+  lane           Int
+  curve_id       String
+  entry_ts       DateTime  @db.Timestamptz(6)
+  exit_ts        DateTime? @db.Timestamptz(6)
+  sector_time_ms Int?
+  label          String?
+  label_source   String?
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@id([id, ts])
+  @@index([entry_ts], map: "idx_sector_passage_entry_ts")
+  @@index([lane, curve_id, ts], map: "idx_sector_passage_lane_curve_ts")
+  @@index([ts(sort: Desc)])
+  @@schema("telemetry")
+}
+
+model sector_threshold {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lane             Int
+  curve_id         String
+  threshold_ms     Int
+  version          Int
+  active           Boolean  @default(false)
+  based_on_samples Int
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([lane, curve_id, version], map: "uq_sector_threshold_lane_curve_version")
+  @@index([lane, curve_id, active], map: "idx_sector_threshold_active")
+  @@schema("telemetry")
+}
