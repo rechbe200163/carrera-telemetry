@@ -1,8 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern } from '@nestjs/microservices';
 import { CrashDetectionService } from './crash-detection.service';
-import { CreateCrashDetectionDto } from './dto/create-crash-detection.dto';
-import { UpdateCrashDetectionDto } from './dto/update-crash-detection.dto';
 import { TrackReedEvent } from 'lib/events.types';
 import { Topics } from 'lib/mqtt.topics';
 

@@ -16,13 +16,9 @@ interface OpenPassage {
 export class CrashDetectionService {
   private readonly logger = new Logger(CrashDetectionService.name);
 
-  // key: deviceId:sectorId:laneId:turnId -> OpenPassage
   private openPassages = new Map<string, OpenPassage>();
 
   constructor() {
-    // private readonly sectorPassageRepo: SectorPassageRepository,
-    // TODO: hier dein Prisma/Repository injecten
-    // Watchdog für HardTimeouts
     setInterval(() => this.checkHardTimeouts(), 100);
   }
 
@@ -35,18 +31,15 @@ export class CrashDetectionService {
     return `${ev.deviceId}:${ev.sectorId}:${ev.laneId}:${ev.turnId}`;
   }
 
-  /**
-   * Wird vom Controller aufgerufen mit dem MQTT-Payload
-   */
   async handleTrackReedEvent(event: TrackReedEvent) {
-    const ts = event.ts ?? Date.now();
+    // WICHTIG: Backend-Zeit benutzen
+    const ts = Date.now();
     const key = this.key(event);
     const existing = this.openPassages.get(key);
 
     if (!event.isExit) {
-      // ENTRY-EVENT
+      // ENTRY
       if (existing) {
-        // Double-Entry → der vorherige Durchlauf war ein Crash
         this.logger.warn(
           `Double entry detected for ${key}. Marking previous as crash (double_entry).`,
         );
@@ -64,7 +57,6 @@ export class CrashDetectionService {
         });
       }
 
-      // neuen Durchlauf starten
       this.openPassages.set(key, {
         deviceId: event.deviceId,
         sectorId: event.sectorId,
@@ -73,10 +65,13 @@ export class CrashDetectionService {
         entryTs: ts,
       });
 
+      this.logger.debug(
+        `Opened passage ${key} at ${ts}. Open count: ${this.openPassages.size}`,
+      );
       return;
     }
 
-    // EXIT-EVENT
+    // EXIT
     if (!existing) {
       this.logger.warn(
         `Exit without open passage for ${key} (ts=${ts}). Ignoring.`,
@@ -100,6 +95,9 @@ export class CrashDetectionService {
     });
 
     this.openPassages.delete(key);
+    this.logger.debug(
+      `Closed passage ${key} with dt=${sectorTimeMs}ms (hard=${isHardTimeout}). Open count: ${this.openPassages.size}`,
+    );
   }
 
   private async checkHardTimeouts() {
@@ -128,7 +126,6 @@ export class CrashDetectionService {
       }
     }
   }
-
   private async savePassage(p: {
     deviceId: string;
     sectorId: number;
