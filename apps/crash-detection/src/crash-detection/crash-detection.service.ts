@@ -21,7 +21,7 @@ export class CrashDetectionService {
   private openPassages = new Map<string, OpenPassage>();
 
   constructor(
-    @Inject('PrismaServiceAuth') // 👈 use unique name to reference
+    @Inject('PrismaService') // 👈 use unique name to reference
     private prisma: CustomPrismaService<PrismaClient>, //
   ) {
     // private readonly sectorPassageRepo: SectorPassageRepository,

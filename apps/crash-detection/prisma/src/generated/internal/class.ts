@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.0.1",
-  "engineVersion": "f09f2815f091dbba658cdcd2264306d88bb5bda6",
+  "clientVersion": "7.1.0",
+  "engineVersion": "ab635e6b9d606fa5c8fb8b1a7f909c3c3c1c98ba",
   "activeProvider": "postgresql",
   "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./src/generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  schemas  = [\"telemetry\"]\n}\n\nmodel sector_passage {\n  id             String    @default(dbgenerated(\"gen_random_uuid()\")) @db.Uuid\n  ts             DateTime  @db.Timestamptz(6)\n  lane           Int\n  curve_id       String\n  entry_ts       DateTime  @db.Timestamptz(6)\n  exit_ts        DateTime? @db.Timestamptz(6)\n  sector_time_ms Int?\n  label          String?\n  label_source   String?\n  created_at     DateTime  @default(now()) @db.Timestamptz(6)\n\n  @@id([id, ts])\n  @@index([entry_ts], map: \"idx_sector_passage_entry_ts\")\n  @@index([lane, curve_id, ts], map: \"idx_sector_passage_lane_curve_ts\")\n  @@index([ts(sort: Desc)])\n  @@schema(\"telemetry\")\n}\n\nmodel sector_threshold {\n  id               String   @id @default(dbgenerated(\"gen_random_uuid()\")) @db.Uuid\n  lane             Int\n  curve_id         String\n  threshold_ms     Int\n  version          Int\n  active           Boolean  @default(false)\n  based_on_samples Int\n  created_at       DateTime @default(now()) @db.Timestamptz(6)\n\n  @@unique([lane, curve_id, version], map: \"uq_sector_threshold_lane_curve_version\")\n  @@index([lane, curve_id, active], map: \"idx_sector_threshold_active\")\n  @@schema(\"telemetry\")\n}\n",
   "runtimeDataModel": {
@@ -62,7 +62,7 @@ export interface PrismaClientConstructor {
    * const sector_passages = await prisma.sector_passage.findMany()
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+   * Read more in our [docs](https://pris.ly/d/client).
    */
 
   new <
@@ -84,7 +84,7 @@ export interface PrismaClientConstructor {
  * const sector_passages = await prisma.sector_passage.findMany()
  * ```
  * 
- * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+ * Read more in our [docs](https://pris.ly/d/client).
  */
 
 export interface PrismaClient<
@@ -113,7 +113,7 @@ export interface PrismaClient<
    * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -125,7 +125,7 @@ export interface PrismaClient<
    * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -136,7 +136,7 @@ export interface PrismaClient<
    * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -148,7 +148,7 @@ export interface PrismaClient<
    * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
 
