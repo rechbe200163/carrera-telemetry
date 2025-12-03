@@ -25,7 +25,6 @@ export class CrashDetectionService {
     private prisma: CustomPrismaService<PrismaClient>, //
   ) {
     // private readonly sectorPassageRepo: SectorPassageRepository,
-    // TODO: hier dein Prisma/Repository injecten
     // Watchdog für HardTimeouts
     setInterval(() => this.checkHardTimeouts(), 100);
   }
@@ -151,19 +150,6 @@ export class CrashDetectionService {
     label: string; // 'normal' | 'crash'
     labelSource: string; // 'normal' | 'hard_timeout' | 'double_entry' | ...
   }) {
-    // Hier später Prisma/Repo verwenden
-    // await this.sectorPassageRepo.create({
-    //   deviceId: p.deviceId,
-    //   sectorId: p.sectorId,
-    //   laneId: p.laneId,
-    //   turnId: p.turnId,
-    //   entryTs: new Date(p.entryTs),
-    //   exitTs: p.exitTs ? new Date(p.exitTs) : null,
-    //   sectorTimeMs: p.sectorTimeMs,
-    //   label: p.label,
-    //   labelSource: p.labelSource,
-    // });
-
     await this.prisma.client.sector_passage.create({
       data: {
         ts: new Date(p.entryTs),
