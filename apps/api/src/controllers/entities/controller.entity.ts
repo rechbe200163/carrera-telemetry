@@ -1,10 +1,12 @@
 import { Expose } from 'class-transformer';
 
-export class CarResponseDto {
+export class Controller {
   @Expose()
   id: number;
   @Expose()
-  driver_id: number;
+  address: number;
   @Expose()
-  label: string;
+  name: string;
+  @Expose()
+  color: string;
 }

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,15 +15,25 @@ async function bootstrap() {
   });
   app.useGlobalPipes(new ValidationPipe());
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.MQTT,
-    options: {
-      url: process.env.MQTT_URL ?? 'mqtt://localhost:1883',
-      clientId: process.env.MQTT_CLIENT_ID ?? 'carrera-telemetry-api',
-      username: process.env.MQTT_USERNAME,
-      password: process.env.MQTT_PASSWORD,
-    },
-  });
+  // app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.MQTT,
+  //   options: {
+  //     url: process.env.MQTT_URL ?? 'mqtt://localhost:1883',
+  //     clientId: process.env.MQTT_CLIENT_ID ?? 'carrera-telemetry-api',
+  //     username: process.env.MQTT_USERNAME,
+  //     password: process.env.MQTT_PASSWORD,
+  //   },
+  // });
+
+  const config = new DocumentBuilder()
+    .setTitle('Cats example')
+    .setDescription('The cats API description')
+    .setVersion('1.0')
+    .addTag('cats')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
+
   await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3333);
 }

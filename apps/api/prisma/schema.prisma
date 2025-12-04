@@ -5,60 +5,159 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["track_analysis"]
+  schemas  = ["race_control"]
 }
 
-model cars {
-  id         BigInt      @id @default(autoincrement())
-  driver_id  BigInt?
-  label      String
-  created_at DateTime    @default(now()) @db.Timestamp(6)
-  drivers    drivers?    @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  lap_times  lap_times[]
+model championships {
+  id               Int                @id @default(autoincrement())
+  name             String
+  season           Int
+  planned_meetings Int?
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  driver_standings driver_standings[]
+  meetings         meetings[]
 
-  @@schema("track_analysis")
+  @@schema("race_control")
 }
 
+// * DONE * //
+model controllers {
+  id              Int               @id @default(autoincrement())
+  address         Int               @unique(map: "uq_controllers_address")
+  name            String
+  color           String?
+  created_at      DateTime          @default(now()) @db.Timestamp(6)
+  session_entries session_entries[]
+
+  @@schema("race_control")
+}
+
+model driver_standings {
+  id              Int           @id @default(autoincrement())
+  championship_id Int
+  driver_id       Int
+  points_total    Int           @default(0)
+  wins            Int           @default(0)
+  podiums         Int           @default(0)
+  races_started   Int           @default(0)
+  last_updated    DateTime      @default(now()) @db.Timestamp(6)
+  championships   championships @relation(fields: [championship_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ds_championship")
+  drivers         drivers       @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ds_driver")
+
+  @@unique([championship_id, driver_id], map: "uq_ds_champ_driver")
+  @@index([championship_id, points_total(sort: Desc)], map: "idx_driver_standings_points")
+  @@schema("race_control")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+// * DONE * //
 model drivers {
-  id         BigInt   @id @default(autoincrement())
-  name       String
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  cars       cars[]
+  id               Int                @id @default(autoincrement())
+  last_name        String
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  code             String             @unique(map: "uq_drivers_code")
+  first_name       String
+  driver_standings driver_standings[]
+  laps             laps[]
+  session_entries  session_entries[]
+  session_results  session_results[]
 
-  @@schema("track_analysis")
+  @@index([code], map: "idx_drivers_code")
+  @@index([last_name], map: "idx_drivers_name")
+  @@schema("race_control")
 }
 
-model lap_times {
-  id          BigInt   @default(autoincrement())
-  car_id      BigInt
-  race_id     BigInt?
-  lap_number  Int
-  lap_time_ms Int
-  valid       Boolean  @default(true)
-  sector1_ms  Int?
-  sector2_ms  Int?
-  sector3_ms  Int?
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  cars        cars     @relation(fields: [car_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  races       races?   @relation(fields: [race_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model laps {
+  id               Int      @default(autoincrement())
+  session_id       Int
+  driver_id        Int
+  lap_number       Int
+  date_start       DateTime @db.Timestamp(6)
+  lap_duration_ms  Int
+  duration_sector1 Int?
+  duration_sector2 Int?
+  duration_sector3 Int?
+  is_pit_out_lap   Boolean  @default(false)
+  is_valid         Boolean  @default(true)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  drivers          drivers  @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_laps_driver")
+  sessions         sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_laps_session")
 
-  @@id([created_at, id])
-  @@index([car_id, created_at], map: "idx_lap_times_car_created_at")
-  @@index([car_id, race_id, lap_number], map: "idx_lap_times_car_race_lap")
-  @@index([race_id, created_at], map: "idx_lap_times_race_created_at")
-  @@index([valid], map: "idx_lap_times_valid")
-  @@index([created_at(sort: Desc)])
-  @@schema("track_analysis")
+  @@id([date_start, id], map: "pk_laps")
+  @@index([date_start(sort: Desc)], map: "idx_laps_date_start_desc")
+  @@index([driver_id, date_start], map: "idx_laps_driver")
+  @@index([session_id, driver_id, lap_number], map: "idx_laps_session_driver")
+  @@index([session_id, lap_number], map: "idx_laps_session_lap")
+  @@index([is_valid], map: "idx_laps_valid")
+  @@schema("race_control")
 }
 
-model races {
-  id         BigInt      @id @default(autoincrement())
-  name       String?
-  track      String?
-  start_time DateTime    @db.Timestamp(6)
-  end_time   DateTime?   @db.Timestamp(6)
-  created_at DateTime    @default(now()) @db.Timestamp(6)
-  lap_times  lap_times[]
+model meetings {
+  id              Int            @id @default(autoincrement())
+  championship_id Int?
+  round_number    Int?
+  name            String?
+  location        String?
+  track_name      String?
+  start_date      DateTime?      @db.Date
+  end_date        DateTime?      @db.Date
+  created_at      DateTime       @default(now()) @db.Timestamp(6)
+  championships   championships? @relation(fields: [championship_id], references: [id], onUpdate: NoAction, map: "fk_meetings_championship")
+  sessions        sessions[]
 
-  @@schema("track_analysis")
+  @@schema("race_control")
+}
+
+model session_entries {
+  id                 Int          @id @default(autoincrement())
+  session_id         Int
+  driver_id          Int
+  controller_id      Int?
+  controller_address Int
+  car_label          String?
+  created_at         DateTime     @default(now()) @db.Timestamp(6)
+  controllers        controllers? @relation(fields: [controller_id], references: [id], onUpdate: NoAction, map: "fk_se_controller")
+  drivers            drivers      @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_se_driver")
+  sessions           sessions     @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_se_session")
+
+  @@unique([session_id, controller_address], map: "uq_session_entries_session_address")
+  @@unique([session_id, driver_id], map: "uq_session_entries_session_driver")
+  @@schema("race_control")
+}
+
+model session_results {
+  id                 Int      @id @default(autoincrement())
+  session_id         Int
+  driver_id          Int
+  position           Int
+  best_lap_ms        Int?
+  avg_lap_ms         Int?
+  laps_completed     Int      @default(0)
+  points_base        Int      @default(0)
+  points_fastest_lap Int      @default(0)
+  points_total       Int      @default(0)
+  created_at         DateTime @default(now()) @db.Timestamp(6)
+  drivers            drivers  @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sr_driver")
+  sessions           sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sr_session")
+
+  @@unique([session_id, driver_id], map: "uq_sr_session_driver")
+  @@index([session_id, position], map: "idx_session_results_session_position")
+  @@schema("race_control")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sessions {
+  id              Int               @id @default(autoincrement())
+  meeting_id      Int
+  session_type    String
+  name            String
+  start_time      DateTime?         @db.Timestamp(6)
+  end_time        DateTime?         @db.Timestamp(6)
+  created_at      DateTime          @default(now()) @db.Timestamp(6)
+  laps            laps[]
+  session_entries session_entries[]
+  session_results session_results[]
+  meetings        meetings          @relation(fields: [meeting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sessions_meeting")
+
+  @@schema("race_control")
 }
