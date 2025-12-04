@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -11,4 +5,60 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["track_analysis"]
+}
+
+model cars {
+  id         BigInt      @id @default(autoincrement())
+  driver_id  BigInt?
+  label      String
+  created_at DateTime    @default(now()) @db.Timestamp(6)
+  drivers    drivers?    @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lap_times  lap_times[]
+
+  @@schema("track_analysis")
+}
+
+model drivers {
+  id         BigInt   @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  cars       cars[]
+
+  @@schema("track_analysis")
+}
+
+model lap_times {
+  id          BigInt   @default(autoincrement())
+  car_id      BigInt
+  race_id     BigInt?
+  lap_number  Int
+  lap_time_ms Int
+  valid       Boolean  @default(true)
+  sector1_ms  Int?
+  sector2_ms  Int?
+  sector3_ms  Int?
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  cars        cars     @relation(fields: [car_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  races       races?   @relation(fields: [race_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([created_at, id])
+  @@index([car_id, created_at], map: "idx_lap_times_car_created_at")
+  @@index([car_id, race_id, lap_number], map: "idx_lap_times_car_race_lap")
+  @@index([race_id, created_at], map: "idx_lap_times_race_created_at")
+  @@index([valid], map: "idx_lap_times_valid")
+  @@index([created_at(sort: Desc)])
+  @@schema("track_analysis")
+}
+
+model races {
+  id         BigInt      @id @default(autoincrement())
+  name       String?
+  track      String?
+  start_time DateTime    @db.Timestamp(6)
+  end_time   DateTime?   @db.Timestamp(6)
+  created_at DateTime    @default(now()) @db.Timestamp(6)
+  lap_times  lap_times[]
+
+  @@schema("track_analysis")
 }
