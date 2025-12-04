@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { DriversModule } from './drivers/drivers.module';
 import { ControllersModule } from './controllers/controllers.module';
+import { ChampionshipsModule } from './championships/championships.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ControllersModule } from './controllers/controllers.module';
     }),
     DriversModule,
     ControllersModule,
+    ChampionshipsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
