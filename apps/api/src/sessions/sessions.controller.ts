@@ -28,4 +28,9 @@ export class SessionsController {
   ) {
     return this.sessionsService.startSession(id, data);
   }
+
+  @Post(':id/abort')
+  async abort(@Param('id', ParseIntPipe) id: number) {
+    return this.sessionsService.abortSession(id);
+  }
 }

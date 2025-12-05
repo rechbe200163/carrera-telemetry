@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { SessionEntryService } from './session-entry.service';
-import { SessionEntryController } from './session-entry.controller';
 import { SessionEntriesRepo } from './session-entry.repo';
 import { PrismaService } from 'src/prisma.service';
+import { SessionEntriesController } from './session-entry.controller';
+import { SessionEntriesService } from './session-entry.service';
 
 @Module({
-  controllers: [SessionEntryController],
-  providers: [SessionEntryService, SessionEntriesRepo, PrismaService],
+  controllers: [SessionEntriesController],
+  providers: [SessionEntriesService, SessionEntriesRepo, PrismaService],
 })
 export class SessionEntryModule {}

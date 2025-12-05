@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { SessionResultService } from './session-result.service';
+import { SessionResultsService } from './session-result.service';
 import { SessionResultController } from './session-result.controller';
+import { SessionResultsRepo } from './session-result.repo';
+import { PrismaService } from 'src/prisma.service';
 
 @Module({
   controllers: [SessionResultController],
-  providers: [SessionResultService],
+  providers: [SessionResultsService, SessionResultsRepo, PrismaService],
 })
 export class SessionResultModule {}

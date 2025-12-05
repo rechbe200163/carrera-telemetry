@@ -19,51 +19,59 @@ export class SessionsService {
     const session = await this.sessionsRepo.findById(sessionId);
     if (!session) throw new NotFoundException();
 
-    if (
-      session.session_type === 'PRACTICE' ||
-      session.session_type === 'QUALYFING'
-    ) {
-      if (!dto.durationMinutes) {
-        throw new BadRequestException(
-          'durationMinutes required for practice/quali',
+    switch (session.session_type) {
+      case 'PRACTICE':
+      case 'QUALYFING':
+        if (!dto.durationMinutes) {
+          throw new BadRequestException(
+            'durationMinutes required for practice/quali',
+          );
+        }
+        const seconds = dto.durationMinutes * 60;
+
+        await this.sessionsRepo.startSession(sessionId, {
+          time_limit_seconds: seconds,
+          lap_limit: null,
+        });
+
+        await this.mqttService.publish('race_control/sessions/start', {
+          sessionId,
+          mode: 'TIME',
+          timeLimitSeconds: seconds,
+          lapLimit: null,
+          sessionType: session.session_type,
+        });
+      case 'RACE':
+        if (!dto.lapLimit) {
+          throw new BadRequestException('lapLimit required for race');
+        }
+
+        await this.sessionsRepo.startSession(sessionId, {
+          time_limit_seconds: null,
+          lap_limit: dto.lapLimit,
+        });
+
+        await this.mqttService.publish('race_control/sessions/start', {
+          sessionId,
+          mode: 'LAPS',
+          timeLimitSeconds: null,
+          lapLimit: dto.lapLimit,
+          sessionType: session.session_type,
+        });
+      case 'FUN':
+        throw new NotImplementedException(
+          'this functionality is yet to be implemented',
         );
-      }
-      const seconds = dto.durationMinutes * 60;
-
-      await this.sessionsRepo.startSession(sessionId, {
-        time_limit_seconds: seconds,
-        lap_limit: null,
-      });
-
-      await this.mqttService.publish('race_control/sessions/start', {
-        sessionId,
-        mode: 'TIME',
-        timeLimitSeconds: seconds,
-        lapLimit: null,
-        sessionType: session.session_type,
-      });
-    } else if (session.session_type === 'RACE') {
-      if (!dto.lapLimit) {
-        throw new BadRequestException('lapLimit required for race');
-      }
-
-      await this.sessionsRepo.startSession(sessionId, {
-        time_limit_seconds: null,
-        lap_limit: dto.lapLimit,
-      });
-
-      await this.mqttService.publish('race_control/sessions/start', {
-        sessionId,
-        mode: 'LAPS',
-        timeLimitSeconds: null,
-        lapLimit: dto.lapLimit,
-        sessionType: session.session_type,
-      });
-    } else {
-      // FUN / was auch immer – du kannst hier frei sein
-      throw new NotImplementedException(
-        'this functionality is yet to be implemented',
-      );
+      default:
+        throw new BadRequestException(
+          'no implementation for this session type',
+        );
     }
+  }
+
+  async abortSession(id: number) {
+    throw new NotImplementedException(
+      'this functionality is yet to be implemented',
+    );
   }
 }

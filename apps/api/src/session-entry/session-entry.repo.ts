@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { SessionEntry } from './dto/create-session-entry.dto';
-import { CreateSessionEntryDto } from './entities/session-entry.entity';
+import { CreateSessionEntryDto } from './dto/create-session-entry.dto';
 
 @Injectable()
 export class SessionEntriesRepo {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateSessionEntryDto): Promise<SessionEntry> {
+  async create(data: CreateSessionEntryDto): Promise<CreateSessionEntryDto> {
     return this.prisma.session_entries.create({ data });
   }
 
-  async listEntriesForSession(sessionId: number): Promise<SessionEntry[]> {
+  async listEntriesForSession(
+    sessionId: number,
+  ): Promise<CreateSessionEntryDto[]> {
     const entries = await this.prisma.session_entries.findMany({
       where: { session_id: sessionId },
       orderBy: [{ controller_address: 'asc' }],
@@ -22,7 +23,7 @@ export class SessionEntriesRepo {
   async findBySessionAndController(
     sessionId: number,
     controllerAddress: number,
-  ): Promise<SessionEntry | null> {
+  ): Promise<CreateSessionEntryDto | null> {
     return this.prisma.session_entries.findUnique({
       where: {
         // nutzt dein UNIQUE-Index (session_id, controller_address)
@@ -37,7 +38,7 @@ export class SessionEntriesRepo {
   async findBySessionAndDriver(
     sessionId: number,
     driverId: number,
-  ): Promise<SessionEntry | null> {
+  ): Promise<CreateSessionEntryDto | null> {
     return this.prisma.session_entries.findUnique({
       where: {
         // nutzt dein UNIQUE-Index (session_id, driver_id)

@@ -1,45 +1,28 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
+  ParseIntPipe,
+  Post,
 } from '@nestjs/common';
-import { SessionEntryService } from './session-entry.service';
-import { UpdateSessionEntryDto } from './dto/update-session-entry.dto';
-import { CreateSessionEntryDto } from './entities/session-entry.entity';
+import { CreateSessionEntryDto } from './dto/create-session-entry.dto';
+import { SessionEntriesService } from './session-entry.service';
 
-@Controller('session-entry')
-export class SessionEntryController {
-  constructor(private readonly sessionEntryService: SessionEntryService) {}
+@Controller('sessions/:sessionId/entries')
+export class SessionEntriesController {
+  constructor(private readonly service: SessionEntriesService) {}
 
   @Post()
-  create(@Body() createSessionEntryDto: CreateSessionEntryDto) {
-    return this.sessionEntryService.create(createSessionEntryDto);
+  async create(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Body() dto: CreateSessionEntryDto,
+  ) {
+    return this.service.assignDriverToController(sessionId, dto);
   }
 
   @Get()
-  findAll() {
-    return this.sessionEntryService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sessionEntryService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateSessionEntryDto: UpdateSessionEntryDto,
-  ) {
-    return this.sessionEntryService.update(+id, updateSessionEntryDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sessionEntryService.remove(+id);
+  async list(@Param('sessionId', ParseIntPipe) sessionId: number) {
+    return this.service.listEntries(sessionId);
   }
 }

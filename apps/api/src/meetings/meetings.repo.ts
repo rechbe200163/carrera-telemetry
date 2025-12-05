@@ -46,4 +46,19 @@ export class MeetingsRepo {
 
     return meeting;
   }
+
+  async listMeetingsByChampionship(championshipId: number) {
+    this.prisma.meetings.findMany({
+      where: { championship_id: championshipId },
+      orderBy: {
+        start_date: 'asc',
+      },
+    });
+  }
+
+  async getMeeting(id: number) {
+    this.prisma.meetings.findUnique({
+      where: { id },
+    });
+  }
 }
