@@ -57,10 +57,6 @@ export class SessionResultsService {
       agg.avg_lap_ms = Math.round(agg.total_time_ms / agg.laps_completed);
     }
 
-    // std. dev. of laps
-    for (const agg of byDriver.values()) {
-    }
-
     // 2) Sortierung für Positionen:
     // - viele Laps zuerst
     // - bei Gleichstand: geringere total_time_ms zuerst
