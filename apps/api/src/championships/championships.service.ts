@@ -2,13 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateChampionshipDto } from './dto/create-champion-ship.dto';
 import { UpdateChampionShipDto } from './dto/update-champion-ship.dto';
 import { ChampionshipsRepo } from './championships.repo';
+import { MeetingsRepo } from 'src/meetings/meetings.repo';
 
 @Injectable()
 export class ChampionshipsService {
-  constructor(private readonly championshipsRepo: ChampionshipsRepo) {}
+  constructor(
+    private readonly championshipsRepo: ChampionshipsRepo,
+    private readonly meetingsRepo: MeetingsRepo,
+  ) {}
 
-  create(createChampionshipDto: CreateChampionshipDto) {
-    return this.championshipsRepo.create(createChampionshipDto);
+  async create(createChampionshipDto: CreateChampionshipDto) {
+    const cs = await this.championshipsRepo.create(createChampionshipDto);
+  }
+
+  createNextMeeting(championshipId: number) {
+    return this.meetingsRepo.createMeetingWithDefaultSessions(championshipId);
   }
 
   findAll() {

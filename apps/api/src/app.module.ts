@@ -5,6 +5,15 @@ import { ConfigModule } from '@nestjs/config';
 import { DriversModule } from './drivers/drivers.module';
 import { ControllersModule } from './controllers/controllers.module';
 import { ChampionshipsModule } from './championships/championships.module';
+import { MeetingsModule } from './meetings/meetings.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { MqttModule } from './mqtt/mqtt.module';
+import { TelemtryModule } from './telemtry/telemtry.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
+import { LapsModule } from './laps/laps.module';
+import { SessionEntryModule } from './session-entry/session-entry.module';
+import { SessionResultModule } from './session-result/session-result.module';
+import { DriverStandingsModule } from './driver-standings/driver-standings.module';
 
 @Module({
   imports: [
@@ -14,6 +23,15 @@ import { ChampionshipsModule } from './championships/championships.module';
     DriversModule,
     ControllersModule,
     ChampionshipsModule,
+    MeetingsModule,
+    SessionsModule,
+    MqttModule,
+    TelemtryModule,
+    TelemetryModule,
+    LapsModule,
+    SessionEntryModule,
+    SessionResultModule,
+    DriverStandingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

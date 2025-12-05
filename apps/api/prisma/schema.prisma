@@ -8,11 +8,30 @@ datasource db {
   schemas  = ["race_control"]
 }
 
+enum Stauts {
+  PLANNED
+  LIVE
+  FINISHED
+  CANCELLED
+  @@schema("race_control")
+}
+
+
+enum SessionType{
+  FUN
+  PRACTICE
+  QUALYFING
+  RACE
+  @@schema("race_control")
+}
+// * DONE * //
 model championships {
   id               Int                @id @default(autoincrement())
   name             String
   season           Int
-  planned_meetings Int?
+  planned_meetings Int                @default(5)
+  held_meetings    Int                @default(0)
+  closed           Boolean            @default(false)
   created_at       DateTime           @default(now()) @db.Timestamp(6)
   driver_standings driver_standings[]
   meetings         meetings[]
@@ -97,10 +116,9 @@ model meetings {
   championship_id Int?
   round_number    Int?
   name            String?
-  location        String?
-  track_name      String?
   start_date      DateTime?      @db.Date
   end_date        DateTime?      @db.Date
+  status          Stauts         @default(PLANNED)
   created_at      DateTime       @default(now()) @db.Timestamp(6)
   championships   championships? @relation(fields: [championship_id], references: [id], onUpdate: NoAction, map: "fk_meetings_championship")
   sessions        sessions[]
@@ -149,10 +167,13 @@ model session_results {
 model sessions {
   id              Int               @id @default(autoincrement())
   meeting_id      Int
-  session_type    String
+  session_type    SessionType
   name            String
   start_time      DateTime?         @db.Timestamp(6)
   end_time        DateTime?         @db.Timestamp(6)
+  status          Stauts            @default(PLANNED)
+  time_limit_seconds Int?    // für PRACTICE + QUALI
+  lap_limit          Int?    // für RACE
   created_at      DateTime          @default(now()) @db.Timestamp(6)
   laps            laps[]
   session_entries session_entries[]

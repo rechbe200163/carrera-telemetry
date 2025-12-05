@@ -1,11 +1,12 @@
 import {
-  Controller,
   Get,
   Post,
   Body,
   Patch,
   Param,
   Delete,
+  Controller,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ChampionshipsService } from './championships.service';
 import { CreateChampionshipDto } from './dto/create-champion-ship.dto';
@@ -36,6 +37,11 @@ export class ChampionshipsController {
     @Body() updateChampionShipDto: UpdateChampionShipDto,
   ) {
     return this.championshipsService.update(+id, updateChampionShipDto);
+  }
+
+  @Post(':id/start')
+  genNextMeeting(@Param('id', ParseIntPipe) id: number) {
+    return this.championshipsService.createNextMeeting(id);
   }
 
   @Delete(':id')
