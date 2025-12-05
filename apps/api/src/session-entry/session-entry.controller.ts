@@ -1,7 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { SessionEntryService } from './session-entry.service';
-import { CreateSessionEntryDto } from './dto/create-session-entry.dto';
 import { UpdateSessionEntryDto } from './dto/update-session-entry.dto';
+import { CreateSessionEntryDto } from './entities/session-entry.entity';
 
 @Controller('session-entry')
 export class SessionEntryController {
@@ -23,7 +31,10 @@ export class SessionEntryController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSessionEntryDto: UpdateSessionEntryDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateSessionEntryDto: UpdateSessionEntryDto,
+  ) {
     return this.sessionEntryService.update(+id, updateSessionEntryDto);
   }
 
