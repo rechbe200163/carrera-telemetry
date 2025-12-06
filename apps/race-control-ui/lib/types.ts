@@ -6,7 +6,7 @@ export type ChampionshipStatus = 'ACTIVE' | 'COMPLETED';
 export type MeetingStatus = 'PLANNED' | 'LIVE' | 'DONE';
 
 export interface Driver {
-  id: string;
+  id: number;
   last_name: string;
   first_name: string;
   code: string;
@@ -15,7 +15,7 @@ export interface Driver {
 }
 
 export interface Championship {
-  id: string;
+  id: number;
   name: string;
   season: number;
   status: ChampionshipStatus;
@@ -24,7 +24,7 @@ export interface Championship {
 }
 
 export interface Meeting {
-  id: string;
+  id: number;
   championshipId: string;
   round: number;
   name: string;
@@ -33,7 +33,7 @@ export interface Meeting {
 }
 
 export interface Session {
-  id: string;
+  id: number;
   meetingId: string;
   type: SessionType;
   status: SessionStatus;
@@ -44,7 +44,7 @@ export interface Session {
 }
 
 export interface SessionEntry {
-  id: string;
+  id: number;
   sessionId: string;
   driver: Driver;
   controllerAddress: number;
@@ -52,7 +52,7 @@ export interface SessionEntry {
 }
 
 export interface LapTime {
-  id: string;
+  id: number;
   sessionEntryId: string;
   lapNumber: number;
   time: number; // in milliseconds

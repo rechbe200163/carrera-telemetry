@@ -15,13 +15,13 @@ import { Button } from '../ui/button';
 import { Driver } from '@/lib/types';
 import { Pencil } from 'lucide-react';
 import { Input } from '../ui/input';
-import { Label } from 'recharts';
+import { Label } from '../ui/label';
 
 function EditDriver({ driver }: { driver: Driver }) {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
 
   const [formState, action, isPending] = useActionState<FormState, FormData>(
-    updateDriverAction,
+    updateDriverAction.bind(null, driver.id),
     initialState
   );
 
@@ -43,74 +43,74 @@ function EditDriver({ driver }: { driver: Driver }) {
         <DialogHeader>
           <DialogTitle>Fahrer bearbeiten</DialogTitle>
         </DialogHeader>
-        {editingDriver && (
-          <div className='space-y-4 py-4'>
-            <div className='space-y-2'>
-              <Label>Name</Label>
-              <Input
-                value={editingDriver.name}
-                onChange={(e) =>
-                  setEditingDriver({
-                    ...editingDriver,
-                    name: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label>Driver Code</Label>
-              <Input
-                value={editingDriver.code}
-                maxLength={3}
-                onChange={(e) =>
-                  setEditingDriver({
-                    ...editingDriver,
-                    code: e.target.value.toUpperCase(),
-                  })
-                }
-                className='font-mono uppercase'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label>Team-Farbe</Label>
-              <div className='flex gap-2'>
-                <Input
-                  type='color'
-                  value={editingDriver.teamColor}
-                  onChange={(e) =>
-                    setEditingDriver({
-                      ...editingDriver,
-                      teamColor: e.target.value,
-                    })
-                  }
-                  className='h-10 w-16 p-1'
-                />
-                <Input
-                  value={editingDriver.teamColor}
-                  onChange={(e) =>
-                    setEditingDriver({
-                      ...editingDriver,
-                      teamColor: e.target.value,
-                    })
-                  }
-                  className='font-mono'
-                />
-              </div>
-            </div>
+        <form action={action} className='space-y-4 py-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='firstName'>Vorname</Label>
+            <Input
+              id='firstName'
+              name='firstName'
+              defaultValue={driver.first_name}
+              disabled={isPending}
+            />
+            {formState.errors?.name && (
+              <p className='text-sm text-red-500'>
+                {formState.errors.name.join(', ')}
+              </p>
+            )}
           </div>
-        )}
-        <DialogFooter>
-          <Button variant='outline' onClick={() => setEditingDriver(null)}>
-            Abbrechen
-          </Button>
-          <Button
-            onClick={() => {
-              console.log('a');
-            }}
-          >
-            Speichern
-          </Button>
-        </DialogFooter>
+
+          <div className='space-y-2'>
+            <Label htmlFor='lastName'>Nachname</Label>
+            <Input
+              id='lastName'
+              name='lastName'
+              defaultValue={driver.last_name}
+              disabled={isPending}
+            />
+            {formState.errors?.code && (
+              <p className='text-sm text-red-500'>
+                {formState.errors.code.join(', ')}
+              </p>
+            )}
+          </div>
+
+          <div className='space-y-2'>
+            <Label htmlFor='color'>Nachname</Label>
+            <Input
+              id='color'
+              name='color'
+              type='color'
+              defaultValue={driver.color}
+              disabled={isPending}
+            />
+            {formState.errors?.code && (
+              <p className='text-sm text-red-500'>
+                {formState.errors.code.join(', ')}
+              </p>
+            )}
+          </div>
+          {formState.message && (
+            <p
+              className={`text-sm ${
+                formState.success ? 'text-green-500' : 'text-red-500'
+              }`}
+            >
+              {formState.message}
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setEditingDriver(null)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => {
+                console.log('a');
+              }}
+            >
+              Speichern
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

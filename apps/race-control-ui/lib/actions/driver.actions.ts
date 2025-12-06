@@ -2,6 +2,7 @@
 
 import { apiClient } from '@/lib/api-client';
 import { FormState } from '../fom.types';
+import { ENDPOINTS } from '@/lib/enpoints';
 
 export async function createDriverAction(
   _prevState: FormState,
@@ -19,11 +20,25 @@ export async function createDriverAction(
 }
 
 export async function updateDriverAction(
+  id: number,
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const payload = {};
-  console.log(payload);
+  const payload: Record<string, unknown> = {};
 
-  return apiClient.safePatch<any, typeof payload>('/drivers', payload);
+  const firstName = formData.get('firstName');
+  if (firstName) payload.first_name = String(firstName);
+
+  const lastName = formData.get('lastName');
+  if (lastName) payload.last_name = String(lastName);
+
+  const color = formData.get('color');
+  if (color) payload.color = String(color);
+
+  console.log('PATCH PAYLOAD:', JSON.stringify(payload, null, 2));
+
+  return apiClient.safePatch<any, typeof payload>(
+    ENDPOINTS.DRIVERS.PATCH_DRIVER(id),
+    payload
+  );
 }

@@ -92,18 +92,13 @@ const AddDriverForm = () => {
             </p>
           )}
 
-          <Button
-            type='submit'
-            className='mt-2 rounded bg-primary px-4 py-2 text-white disabled:opacity-50'
-            disabled={isPending}
-          >
-            {isPending ? 'Speichern…' : 'Driver anlegen'}
-          </Button>
           <DialogFooter>
             <Button variant='outline' onClick={() => setIsAddOpen(false)}>
               Abbrechen
             </Button>
-            <Button type='submit'>Fahrer erstellen</Button>
+            <Button type='submit' disabled={isPending}>
+              {isPending ? 'Speichern…' : 'Driver anlegen'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
