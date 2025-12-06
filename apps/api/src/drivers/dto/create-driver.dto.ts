@@ -17,4 +17,12 @@ export class CreateDriverDto {
   @IsString()
   @Transform(({ value }) => value.trim())
   readonly last_name: string;
+
+  @ApiProperty({
+    description:
+      'color of the driver for visual represetation, not in any realtaion with controller color',
+    example: '#FF0000',
+  })
+  @IsString()
+  color: string;
 }

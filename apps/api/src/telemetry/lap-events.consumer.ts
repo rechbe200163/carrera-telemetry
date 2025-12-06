@@ -1,3 +1,4 @@
+import { session_entries } from './../../generated/prisma/client';
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { LapsRepo } from 'src/laps/laps.repo';
 import { MqttService } from 'src/mqtt/mqtt.service';
@@ -41,6 +42,7 @@ export class LapEventsConsumer implements OnModuleInit {
 
     const session = await this.sessionsRepo.listEntriesForSession(sessionId);
     if (!session) return;
+    if (!session.session_entries) return;
     for (const e of session.session_entries) {
       this.controllerMap.set(e.controller_address, e.driver_id);
     }

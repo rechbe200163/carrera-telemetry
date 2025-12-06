@@ -10,5 +10,7 @@ export class Driver {
   @Expose()
   code: string;
   @Expose()
+  color: string;
+  @Expose()
   created_at: Date;
 }

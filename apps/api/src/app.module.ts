@@ -8,7 +8,6 @@ import { ChampionshipsModule } from './championships/championships.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { MqttModule } from './mqtt/mqtt.module';
-import { TelemtryModule } from './telemtry/telemtry.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
 import { LapsModule } from './laps/laps.module';
 import { SessionEntryModule } from './session-entry/session-entry.module';
@@ -26,7 +25,6 @@ import { DriverStandingsModule } from './driver-standings/driver-standings.modul
     MeetingsModule,
     SessionsModule,
     MqttModule,
-    TelemtryModule,
     TelemetryModule,
     LapsModule,
     SessionEntryModule,

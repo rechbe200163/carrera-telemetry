@@ -13,17 +13,19 @@ enum Stauts {
   LIVE
   FINISHED
   CANCELLED
+
   @@schema("race_control")
 }
 
-
-enum SessionType{
+enum SessionType {
   FUN
   PRACTICE
   QUALYFING
   RACE
+
   @@schema("race_control")
 }
+
 // * DONE * //
 model championships {
   id               Int                @id @default(autoincrement())
@@ -76,6 +78,7 @@ model drivers {
   created_at       DateTime           @default(now()) @db.Timestamp(6)
   code             String             @unique(map: "uq_drivers_code")
   first_name       String
+  color            String
   driver_standings driver_standings[]
   laps             laps[]
   session_entries  session_entries[]
@@ -165,20 +168,20 @@ model session_results {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model sessions {
-  id              Int               @id @default(autoincrement())
-  meeting_id      Int
-  session_type    SessionType
-  name            String
-  start_time      DateTime?         @db.Timestamp(6)
-  end_time        DateTime?         @db.Timestamp(6)
-  status          Stauts            @default(PLANNED)
-  time_limit_seconds Int?    // für PRACTICE + QUALI
-  lap_limit          Int?    // für RACE
-  created_at      DateTime          @default(now()) @db.Timestamp(6)
-  laps            laps[]
-  session_entries session_entries[]
-  session_results session_results[]
-  meetings        meetings          @relation(fields: [meeting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sessions_meeting")
+  id                 Int               @id @default(autoincrement())
+  meeting_id         Int
+  session_type       SessionType
+  name               String
+  start_time         DateTime?         @db.Timestamp(6)
+  end_time           DateTime?         @db.Timestamp(6)
+  status             Stauts            @default(PLANNED)
+  time_limit_seconds Int? // für PRACTICE + QUALI
+  lap_limit          Int? // für RACE
+  created_at         DateTime          @default(now()) @db.Timestamp(6)
+  laps               laps[]
+  session_entries    session_entries[]
+  session_results    session_results[]
+  meetings           meetings          @relation(fields: [meeting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sessions_meeting")
 
   @@schema("race_control")
 }
