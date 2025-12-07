@@ -1,5 +1,5 @@
 import type { Driver } from '@/lib/types';
-import Adddriver from '@/components/forms/AddDriver';
+import Adddriver from '@/components/forms/drivers/AddDriver';
 import {
   driverApiService,
   DriverApiService,

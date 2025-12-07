@@ -21,7 +21,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Driver } from '@/lib/types';
-import EditDriver from '../forms/EditDriver';
+import EditDriver from '../forms/drivers/EditDriver';
+import DeleteDriver from '../forms/drivers/DeleteDriver';
 
 function DriverTable({ drivers }: { drivers: Driver[] }) {
   return (
@@ -78,17 +79,10 @@ function DriverTable({ drivers }: { drivers: Driver[] }) {
                   </div>
                 </TableCell>
                 <TableCell className='text-right'>
-                  {/* <div className='flex items-center justify-end gap-2'>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      className='text-destructive hover:text-destructive'
-                      onClick={() => console.log('deleted')}
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
-                  </div> */}
-                  <EditDriver driver={driver} />
+                  <div className='flex items-center justify-end gap-2'>
+                    <EditDriver driver={driver} />
+                    <DeleteDriver driverId={driver.id} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

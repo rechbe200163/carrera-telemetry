@@ -1,7 +1,10 @@
 'use client';
-import { updateDriverAction } from '@/lib/actions/driver.actions';
-import { FormState, initialState } from '@/lib/fom.types';
+
 import { useActionState, useState } from 'react';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { createDriverAction } from '@/lib/actions/driver.actions';
+import { FormState, initialState } from '@/lib/fom.types';
 import {
   Dialog,
   DialogContent,
@@ -11,37 +14,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '../ui/button';
-import { Driver } from '@/lib/types';
-import { Pencil } from 'lucide-react';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+import { Button } from '../../ui/button';
+import { Plus } from 'lucide-react';
 
-function EditDriver({ driver }: { driver: Driver }) {
-  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+const AddDriverForm = () => {
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const [formState, action, isPending] = useActionState<FormState, FormData>(
-    updateDriverAction.bind(null, driver.id),
+    createDriverAction,
     initialState
   );
 
   return (
-    <Dialog
-      open={editingDriver?.id === driver.id}
-      onOpenChange={(open) => !open && setEditingDriver(null)}
-    >
+    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          size='icon'
-          onClick={() => setEditingDriver(driver)}
-        >
-          <Pencil className='h-4 w-4' />
+        <Button>
+          <Plus className='mr-2 h-4 w-4' />
+          Add Driver
         </Button>
       </DialogTrigger>
       <DialogContent className='bg-card border-border'>
         <DialogHeader>
-          <DialogTitle>Fahrer bearbeiten</DialogTitle>
+          <DialogTitle>Neuer Fahrer</DialogTitle>
+          <DialogDescription>
+            Erstelle einen neuen Fahrer für das System.
+          </DialogDescription>
         </DialogHeader>
         <form action={action} className='space-y-4 py-4'>
           <div className='space-y-2'>
@@ -49,7 +46,8 @@ function EditDriver({ driver }: { driver: Driver }) {
             <Input
               id='firstName'
               name='firstName'
-              defaultValue={driver.first_name}
+              placeholder='Max Verstappen'
+              defaultValue=''
               disabled={isPending}
             />
             {formState.errors?.name && (
@@ -64,7 +62,8 @@ function EditDriver({ driver }: { driver: Driver }) {
             <Input
               id='lastName'
               name='lastName'
-              defaultValue={driver.last_name}
+              placeholder='Max Verstappen'
+              defaultValue=''
               disabled={isPending}
             />
             {formState.errors?.code && (
@@ -76,13 +75,7 @@ function EditDriver({ driver }: { driver: Driver }) {
 
           <div className='space-y-2'>
             <Label htmlFor='color'>Nachname</Label>
-            <Input
-              id='color'
-              name='color'
-              type='color'
-              defaultValue={driver.color}
-              disabled={isPending}
-            />
+            <Input id='color' name='color' type='color' disabled={isPending} />
             {formState.errors?.code && (
               <p className='text-sm text-red-500'>
                 {formState.errors.code.join(', ')}
@@ -98,22 +91,19 @@ function EditDriver({ driver }: { driver: Driver }) {
               {formState.message}
             </p>
           )}
+
           <DialogFooter>
-            <Button variant='outline' onClick={() => setEditingDriver(null)}>
+            <Button variant='outline' onClick={() => setIsAddOpen(false)}>
               Abbrechen
             </Button>
-            <Button
-              onClick={() => {
-                console.log('a');
-              }}
-            >
-              Speichern
+            <Button type='submit' disabled={isPending}>
+              {isPending ? 'Speichern…' : 'Driver anlegen'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export default EditDriver;
+export default AddDriverForm;
