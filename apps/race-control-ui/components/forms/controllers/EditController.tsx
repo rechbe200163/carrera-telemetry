@@ -1,5 +1,5 @@
 'use client';
-import { Controller } from '@/lib/types';
+import { Controllers } from '@/lib/types';
 import { useActionState, useState } from 'react';
 import {
   Dialog,
@@ -22,12 +22,11 @@ const EditController = ({
   controller,
   availableAddresses,
 }: {
-  controller: Controller;
+  controller: Controllers;
   availableAddresses: number[];
 }) => {
-  const [editingController, setEditingController] = useState<Controller | null>(
-    null
-  );
+  const [editingController, setEditingController] =
+    useState<Controllers | null>(null);
 
   const [formState, action, isPending] = useActionState<FormState, FormData>(
     updateControllerAction.bind(null, controller.id),

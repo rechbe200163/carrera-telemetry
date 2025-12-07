@@ -1,7 +1,10 @@
 'use client';
-import { updateDriverAction } from '@/lib/actions/driver.actions';
-import { FormState, initialState } from '@/lib/fom.types';
+
 import { useActionState, useState } from 'react';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { createDriverAction } from '@/lib/actions/driver.actions';
+import { FormState, initialState } from '@/lib/fom.types';
 import {
   Dialog,
   DialogContent,
@@ -12,44 +15,40 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '../../ui/button';
-import { Drivers } from '@/lib/types';
-import { Pencil } from 'lucide-react';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
+import { Plus } from 'lucide-react';
+import { createChampionshipAction } from '@/lib/actions/championsship.actions';
 
-function EditDriver({ driver }: { driver: Drivers }) {
-  const [editingDriver, setEditingDriver] = useState<Drivers | null>(null);
+const AddChampionshipForm = () => {
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const [formState, action, isPending] = useActionState<FormState, FormData>(
-    updateDriverAction.bind(null, driver.id),
+    createChampionshipAction,
     initialState
   );
 
   return (
-    <Dialog
-      open={editingDriver?.id === driver.id}
-      onOpenChange={(open) => !open && setEditingDriver(null)}
-    >
+    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          size='icon'
-          onClick={() => setEditingDriver(driver)}
-        >
-          <Pencil className='h-4 w-4' />
+        <Button>
+          <Plus className='mr-2 h-4 w-4' />
+          Neue Championship
         </Button>
       </DialogTrigger>
       <DialogContent className='bg-card border-border'>
         <DialogHeader>
-          <DialogTitle>Fahrer bearbeiten</DialogTitle>
+          <DialogTitle>Neuer Fahrer</DialogTitle>
+          <DialogDescription>
+            Erstelle eine neue Championship für das System.
+          </DialogDescription>
         </DialogHeader>
         <form action={action} className='space-y-4 py-4'>
           <div className='space-y-2'>
-            <Label htmlFor='firstName'>Vorname</Label>
+            <Label htmlFor='firstName'>Name</Label>
             <Input
-              id='firstName'
-              name='firstName'
-              defaultValue={driver.first_name}
+              id='name'
+              name='name'
+              placeholder='WM 2025'
+              defaultValue=''
               disabled={isPending}
             />
             {formState.errors?.name && (
@@ -60,11 +59,13 @@ function EditDriver({ driver }: { driver: Drivers }) {
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='lastName'>Nachname</Label>
+            <Label htmlFor='season'>Season</Label>
             <Input
-              id='lastName'
-              name='lastName'
-              defaultValue={driver.last_name}
+              id='season'
+              name='season'
+              type='number'
+              placeholder={'2026'}
+              defaultValue=''
               disabled={isPending}
             />
             {formState.errors?.code && (
@@ -75,12 +76,11 @@ function EditDriver({ driver }: { driver: Drivers }) {
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='color'>Nachname</Label>
+            <Label htmlFor='color'>Anzahl Rennen</Label>
             <Input
-              id='color'
-              name='color'
-              type='color'
-              defaultValue={driver.color}
+              id='plannedMeetings'
+              name='plannedMeetings'
+              type='number'
               disabled={isPending}
             />
             {formState.errors?.code && (
@@ -98,22 +98,19 @@ function EditDriver({ driver }: { driver: Drivers }) {
               {formState.message}
             </p>
           )}
+
           <DialogFooter>
-            <Button variant='outline' onClick={() => setEditingDriver(null)}>
+            <Button variant='outline' onClick={() => setIsAddOpen(false)}>
               Abbrechen
             </Button>
-            <Button
-              onClick={() => {
-                console.log('a');
-              }}
-            >
-              Speichern
+            <Button type='submit' disabled={isPending}>
+              {isPending ? 'Speichern…' : 'Driver anlegen'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export default EditDriver;
+export default AddChampionshipForm;

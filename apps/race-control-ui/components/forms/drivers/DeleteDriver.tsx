@@ -2,9 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { updateDriverAction } from '@/lib/actions/driver.actions';
 import { FormState, initialState } from '@/lib/fom.types';
-import { Driver } from '@/lib/types';
 import { Loader2, Trash2 } from 'lucide-react';
-import React, { useActionState } from 'react';
+import { useActionState } from 'react';
 
 function DeleteDriver({ driverId }: { driverId: number }) {
   const [formState, action, isPending] = useActionState<FormState, FormData>(

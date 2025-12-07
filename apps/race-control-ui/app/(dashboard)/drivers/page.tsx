@@ -1,9 +1,5 @@
-import type { Driver } from '@/lib/types';
 import Adddriver from '@/components/forms/drivers/AddDriver';
-import {
-  driverApiService,
-  DriverApiService,
-} from '@/lib/api/driver-api.service';
+import { driverApiService } from '@/lib/api/driver-api.service';
 import DriverTable from '@/components/tables/DriverTable';
 
 export default async function DriversPage() {

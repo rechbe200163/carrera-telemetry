@@ -20,11 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Driver } from '@/lib/types';
+import { Drivers } from '@/lib/types';
 import EditDriver from '../forms/drivers/EditDriver';
 import DeleteDriver from '../forms/drivers/DeleteDriver';
 
-function DriverTable({ drivers }: { drivers: Driver[] }) {
+function DriverTable({ drivers }: { drivers: Drivers[] }) {
   return (
     <Card className='bg-card border-border'>
       <CardHeader>
