@@ -9,6 +9,14 @@ const controllerIcons = ['🔵', '🔴', '🟢', '🟡', '⚪', '🟠', '🟣', 
 export default async function ControllersPage() {
   const controllers = await controllerApiService.getAll();
 
+  const allAddresses = [0, 1, 2, 3, 4, 5];
+  const usedAddresses = controllers.map((c) => c.address);
+  const availableAddresses = allAddresses.filter(
+    (addr) => !usedAddresses.includes(addr)
+  );
+
+  console.log(availableAddresses);
+
   return (
     <div className='flex flex-col'>
       <div className='p-6 space-y-6'>
@@ -20,7 +28,7 @@ export default async function ControllersPage() {
               Verwaltung der physischen Carrera-Regler
             </p>
           </div>
-          <AddControllerForm availableAddresses={[0, 1, 2, 3, 4, 5]} />
+          <AddControllerForm availableAddresses={availableAddresses} />
         </div>
 
         {/* Info Banner */}
@@ -36,7 +44,10 @@ export default async function ControllersPage() {
           </CardContent>
         </Card>
 
-        <ControllerTable controllers={controllers} />
+        <ControllerTable
+          controllers={controllers}
+          availableAddresses={availableAddresses}
+        />
       </div>
     </div>
   );

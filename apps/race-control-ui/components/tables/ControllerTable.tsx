@@ -28,7 +28,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Controller } from '@/lib/types';
 import EditController from '../forms/controllers/EditController';
-function ControllerTable({ controllers }: { controllers: Controller[] }) {
+import DeleteDriver from '../forms/drivers/DeleteDriver';
+import DeleteController from '../forms/controllers/DeleteController';
+function ControllerTable({
+  controllers,
+  availableAddresses,
+}: {
+  controllers: Controller[];
+  availableAddresses: number[];
+}) {
   return (
     <Card className='bg-card border-border'>
       <CardHeader>
@@ -87,6 +95,7 @@ function ControllerTable({ controllers }: { controllers: Controller[] }) {
                       controller={controller}
                       availableAddresses={[]} // ggf. real verfügbare Adressen hier setzen
                     />
+                    <DeleteController controllerId={controller.id} />
                   </TableCell>
                 </TableRow>
               ))}

@@ -1,13 +1,14 @@
+'use client';
 import { Button } from '@/components/ui/button';
 import { deleteControllerAction } from '@/lib/actions/controller.actions';
 import { updateDriverAction } from '@/lib/actions/driver.actions';
 import { FormState, initialState } from '@/lib/fom.types';
-import { Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import React, { useActionState } from 'react';
 
-const DeleteController = ({ driverId }: { driverId: number }) => {
+const DeleteController = ({ controllerId }: { controllerId: number }) => {
   const [formState, action, isPending] = useActionState<FormState, FormData>(
-    deleteControllerAction.bind(null, driverId),
+    deleteControllerAction.bind(null, controllerId),
     initialState
   );
 
@@ -19,7 +20,11 @@ const DeleteController = ({ driverId }: { driverId: number }) => {
       className='text-destructive hover:text-destructive'
       onClick={() => console.log('deleted')}
     >
-      <Trash2 className='h-4 w-4' />
+      {isPending ? (
+        <Loader2 className='animate-spin' />
+      ) : (
+        <Trash2 className='h-4 w-4' />
+      )}
     </Button>
   );
 };
