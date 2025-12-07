@@ -4,8 +4,6 @@ import AddControllerForm from '@/components/forms/controllers/AddController';
 import ControllerTable from '@/components/tables/ControllerTable';
 import { controllerApiService } from '@/lib/api/controller-api.service copy';
 
-const controllerIcons = ['🔵', '🔴', '🟢', '🟡', '⚪', '🟠', '🟣', '🟤'];
-
 export default async function ControllersPage() {
   const controllers = await controllerApiService.getAll();
 
