@@ -17,7 +17,7 @@ export async function createControllerAction(
   console.log(JSON.stringify(payload, null, 2));
 
   return apiClient.safePost<any, typeof payload>(
-    ENDPOINTS.CONTROLLERS.POST_CONTROLLER,
+    ENDPOINTS.CONTROLLERS.POST,
     payload
   );
 }
@@ -44,7 +44,7 @@ export async function updateControllerAction(
   console.log('PATCH PAYLOAD:', JSON.stringify(payload, null, 2));
 
   return apiClient.safePatch<any, typeof payload>(
-    ENDPOINTS.CONTROLLERS.PATCH_CONTROLLER(id),
+    ENDPOINTS.CONTROLLERS.PATCH(id),
     payload
   );
 }
@@ -53,5 +53,5 @@ export async function deleteControllerAction(
   id: number,
   _prevState: FormState
 ) {
-  return apiClient.safeDelete(ENDPOINTS.CONTROLLERS.DELETE_CONTROLLER(id));
+  return apiClient.safeDelete(ENDPOINTS.CONTROLLERS.DELETE(id));
 }

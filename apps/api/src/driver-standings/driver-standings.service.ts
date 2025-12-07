@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
+import { DriverStandingsRepo } from './driver-standings.repo';
+import { DriverStandingsLeaderBoard } from './entities/driver-standings-leaderboard.entity';
 
 @Injectable()
 export class DriverStandingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly driverStandingsRepo: DriverStandingsRepo,
+  ) {}
 
   async recalculateForChampionship(championshipId: number) {
     // alle SessionResults der Championship holen
@@ -85,5 +90,21 @@ export class DriverStandingsService {
     }
 
     return aggregates;
+  }
+
+  async getLeaderBoard(
+    championshipId: number,
+  ): Promise<DriverStandingsLeaderBoard[] | null> {
+    const raw = await this.driverStandingsRepo.getLeaderBoard(championshipId);
+    const data = raw.map((item, idx) => ({
+      driver: item.drivers,
+      championship: {
+        points_total: item.points_total,
+        wins: item.wins,
+        podiums: item.podiums,
+        position: idx + 1,
+      },
+    }));
+    return data;
   }
 }

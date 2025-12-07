@@ -2,8 +2,8 @@
 'server-only';
 
 import { apiClient } from '@/lib/api-client';
-import { Controller, Driver } from '../types';
 import { ENDPOINTS } from '../enpoints';
+import { Controllers } from '../types';
 
 export class ControllersApiService {
   private static instance: ControllersApiService;
@@ -17,21 +17,17 @@ export class ControllersApiService {
 
   private constructor(private readonly baseClient = apiClient) {}
 
-  async getAll(): Promise<Controller[]> {
-    return this.baseClient.get<Controller[]>(
-      ENDPOINTS.CONTROLLERS.GET_CONTROLLER
-    );
+  async getAll(): Promise<Controllers[]> {
+    return this.baseClient.get<Controllers[]>(ENDPOINTS.CONTROLLERS.GET);
   }
 
-  async getById(id: number): Promise<Controller> {
-    return this.baseClient.get<Controller>(
-      ENDPOINTS.CONTROLLERS.GET_CONTROLLER_ID(id)
-    );
+  async getById(id: number): Promise<Controllers> {
+    return this.baseClient.get<Controllers>(ENDPOINTS.CONTROLLERS.GET_ID(id));
   }
 
   // Optional: Suche
-  async search(query: string): Promise<Controller[]> {
-    return this.baseClient.get<Controller[]>(
+  async search(query: string): Promise<Controllers[]> {
+    return this.baseClient.get<Controllers[]>(
       `/drivers?query=${encodeURIComponent(query)}`
     );
   }

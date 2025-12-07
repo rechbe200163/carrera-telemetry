@@ -6,10 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { DriverStandingsService } from './driver-standings.service';
 import { CreateDriverStandingDto } from './dto/create-driver-standing.dto';
 import { UpdateDriverStandingDto } from './dto/update-driver-standing.dto';
+import { ApiResponse } from '@nestjs/swagger';
+import { DriverStandingsLeaderBoard } from './entities/driver-standings-leaderboard.entity';
 
 @Controller('driver-standings')
 export class DriverStandingsController {
@@ -22,10 +26,13 @@ export class DriverStandingsController {
   //   return this.driverStandingsService.create(createDriverStandingDto);
   // }
 
-  // @Get()
-  // findAll() {
-  //   return this.driverStandingsService.findAll();
-  // }
+  @ApiResponse({
+    type: DriverStandingsLeaderBoard,
+  })
+  @Get('/championship/:id/leaderBoard')
+  findAll(@Param('id', ParseIntPipe) id: number) {
+    return this.driverStandingsService.getLeaderBoard(id);
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {
