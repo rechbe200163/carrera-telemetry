@@ -14,6 +14,14 @@ export interface Driver {
   created_at: Date;
 }
 
+export interface Controller {
+  id: number;
+  address: number;
+  name: string;
+  icon: string;
+  notes?: string;
+}
+
 export interface Championship {
   id: number;
   name: string;

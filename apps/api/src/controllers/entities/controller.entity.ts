@@ -8,5 +8,5 @@ export class Controller {
   @Expose()
   name: string;
   @Expose()
-  color: string;
+  icon: string;
 }

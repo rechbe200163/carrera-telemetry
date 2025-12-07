@@ -42,3 +42,7 @@ export async function updateDriverAction(
     payload
   );
 }
+
+export async function deleteDriverActiob(id: number, _prevState: FormState) {
+  return apiClient.safeDelete(ENDPOINTS.DRIVERS.DELETE_DRIVER(id));
+}

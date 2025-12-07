@@ -21,5 +21,14 @@ export class CreateControllerDto {
   @IsString()
   @Transform(({ value }) => value.trim())
   @IsOptional()
-  color?: string;
+  icon?: string;
+
+  @ApiProperty({
+    example: 'additional notes',
+    description: 'mega controller',
+  })
+  @IsString()
+  @Transform(({ value }) => value.trim())
+  @IsOptional()
+  notes: string;
 }

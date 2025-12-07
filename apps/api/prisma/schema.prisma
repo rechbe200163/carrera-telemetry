@@ -46,7 +46,8 @@ model controllers {
   id              Int               @id @default(autoincrement())
   address         Int               @unique(map: "uq_controllers_address")
   name            String
-  color           String?
+  icon            String?
+  notes           String
   created_at      DateTime          @default(now()) @db.Timestamp(6)
   session_entries session_entries[]
 
