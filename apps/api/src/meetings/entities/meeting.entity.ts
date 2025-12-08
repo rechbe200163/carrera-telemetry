@@ -14,5 +14,5 @@ export class Meetings {
   @Expose()
   end_date: Date | null;
   @Expose()
-  stauts?: string;
+  status?: string;
 }

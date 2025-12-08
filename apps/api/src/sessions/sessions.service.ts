@@ -74,4 +74,15 @@ export class SessionsService {
       'this functionality is yet to be implemented',
     );
   }
+
+  async findByMeetingId(meetingId: number) {
+    return this.sessionsRepo.findByMeetingId(meetingId);
+  }
+
+  async findAll() {
+    return this.sessionsRepo.findAll();
+  }
+  async findOne(id: number) {
+    return this.sessionsRepo.findById(id);
+  }
 }

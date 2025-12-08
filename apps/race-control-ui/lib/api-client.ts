@@ -1,7 +1,7 @@
 import { FormState } from './fom.types';
 
 // lib/api-client.ts
-const BASE_URL = process.env.API_URL ?? 'http://localhost';
+const BASE_URL = process.env.API_URL ?? 'http://localhost:3333';
 
 export class ApiError extends Error {
   constructor(
@@ -167,7 +167,7 @@ export class ApiClient {
     // technische Fehler (Network, Timeout, etc.)
     return {
       success: false,
-      message: 'Interner Fehler – bitte später erneut versuchen.',
+      message: 'Interner Fehler – bitte später erneut versuchen.' + err,
     };
   }
 }

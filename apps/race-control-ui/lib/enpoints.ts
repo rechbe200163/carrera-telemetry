@@ -47,6 +47,7 @@ export const ENDPOINTS = {
     RACES: (champId: number) => `/championships/${champId}/races`,
     RACE_ID: (champId: number, raceId: number) =>
       `/championships/${champId}/races/${raceId}`,
+    MEETING_ID: (meetingId: number) => `/championships/meeting/${meetingId}`,
   },
 
   // --- Races (falls du die auch separat willst) ---
@@ -71,18 +72,21 @@ export const ENDPOINTS = {
   SESSIONS: {
     POST: '/sessions',
     GET: '/sessions',
+    START: (id: number) => `/sessions/${id}/start`,
     GET_ID: (id: number) => `/sessions/${id}`,
     PATCH: (id: number) => `/sessions/${id}`,
     DELETE: (id: number) => `/sessions/${id}`,
+    GET_BY_MEETING_ID: (meetingId: number) => `/sessions/meeting/${meetingId}`,
   },
 
   // --- Session Entries (Driver/Controller Paarung) ---
   SESSION_ENTRIES: {
-    POST: '/session-entries',
+    POST: (id: number) => `/sessions/${id}/entries`,
     GET: '/session-entries',
     GET_ID: (id: number) => `/session-entries/${id}`,
     PATCH: (id: number) => `/session-entries/${id}`,
     DELETE: (id: number) => `/session-entries/${id}`,
+    GET_BY_SESSION_ID: (sessionId: number) => `/sessions/${sessionId}/entries`,
   },
   DRIVER_STANDINGS: {
     POST: '/driver-standings',
@@ -96,6 +100,8 @@ export const ENDPOINTS = {
 
   MEETINGS: {
     POST: '/meetings',
+    POST_GEN_NEXT_MEETING: (id: number) =>
+      `/meetings/gen-next/championship/${id}/meetings`,
     GET: '/meetings',
     GET_ID: (id: number) => `/meetings/${id}`,
     PATCH: (id: number) => `/meetings/${id}`,

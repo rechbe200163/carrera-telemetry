@@ -33,4 +33,19 @@ export class SessionsController {
   async abort(@Param('id', ParseIntPipe) id: number) {
     return this.sessionsService.abortSession(id);
   }
+
+  @Get()
+  findAll() {
+    return this.sessionsService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.sessionsService.findOne(id);
+  }
+
+  @Get('/meeting/:id')
+  findByChampionshipId(@Param('id', ParseIntPipe) id: number) {
+    return this.sessionsService.findByMeetingId(id);
+  }
 }

@@ -30,6 +30,18 @@ export class ChampionshipsRepo {
     });
   }
 
+  async findByMettingId(meetingId: number) {
+    return this.prisma.championships.findFirst({
+      where: {
+        meetings: {
+          some: {
+            id: meetingId,
+          },
+        },
+      },
+    });
+  }
+
   async remove(id: number): Promise<ChampionShip> {
     return this.prisma.championships.delete({
       where: { id },

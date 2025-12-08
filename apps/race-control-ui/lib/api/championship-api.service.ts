@@ -25,6 +25,12 @@ export class ChampionShipApiService {
       ENDPOINTS.CHAMPIONSHIPS.GET_ID(id)
     );
   }
+
+  async getByMeetingId(meetingId: number) {
+    return this.baseClient.get<Championships>(
+      ENDPOINTS.CHAMPIONSHIPS.MEETING_ID(meetingId)
+    );
+  }
 }
 
 export const championshipsApiService = ChampionShipApiService.getInstance();

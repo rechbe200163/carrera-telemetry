@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { Meetings } from './entities/meeting.entity';
 import { SessionsRepo } from 'src/sessions/sessions.repo'; // <-- wichtig
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class MeetingsRepo {
@@ -23,7 +24,10 @@ export class MeetingsRepo {
    * - Round-Number automatisch → (#existingMeetings + 1)
    * - Practice, Qualifying, Race Sessions
    */
-  async createMeetingWithDefaultSessions(championshipId: number) {
+  async createMeetingWithDefaultSessions(
+    championshipId: number,
+    data: CreateMeetingDto,
+  ) {
     // 1) Anzahl der bisherigen Meetings in dieser WM ermitteln
     const count = await this.prisma.meetings.count({
       where: { championship_id: championshipId },
@@ -36,8 +40,7 @@ export class MeetingsRepo {
       data: {
         championship_id: championshipId,
         round_number: nextRound,
-        name: `Round ${nextRound}`,
-        status: 'PLANNED',
+        ...data,
       },
     });
 
@@ -47,18 +50,35 @@ export class MeetingsRepo {
     return meeting;
   }
 
+  async getById(id: number) {
+    return this.prisma.meetings.findUnique({
+      where: { id },
+    });
+  }
+
   async listMeetingsByChampionship(championshipId: number) {
-    this.prisma.meetings.findMany({
+    return this.prisma.meetings.findMany({
       where: { championship_id: championshipId },
       orderBy: {
-        start_date: 'asc',
+        round_number: 'asc',
       },
     });
   }
 
-  async getMeeting(id: number) {
-    this.prisma.meetings.findUnique({
+  async getAll() {
+    return this.prisma.meetings.findMany();
+  }
+
+  async getMeeting(id: number): Promise<Meetings | null> {
+    const meeting = await this.prisma.meetings.findUnique({
       where: { id },
+    });
+
+    if (!meeting)
+      throw new NotFoundException('meeting with given id not found');
+
+    return plainToInstance(Meetings, meeting, {
+      excludeExtraneousValues: true,
     });
   }
 }

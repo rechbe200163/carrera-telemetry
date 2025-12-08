@@ -38,11 +38,11 @@ export async function updateDriverAction(
   console.log('PATCH PAYLOAD:', JSON.stringify(payload, null, 2));
 
   return apiClient.safePatch<any, typeof payload>(
-    ENDPOINTS.DRIVERS.PATCH_DRIVER(id),
+    ENDPOINTS.DRIVERS.PATCH(id),
     payload
   );
 }
 
 export async function deleteDriverActiob(id: number, _prevState: FormState) {
-  return apiClient.safeDelete(ENDPOINTS.DRIVERS.DELETE_DRIVER(id));
+  return apiClient.safeDelete(ENDPOINTS.DRIVERS.DELETE(id));
 }

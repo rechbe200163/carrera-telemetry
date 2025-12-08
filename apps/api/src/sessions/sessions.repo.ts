@@ -1,3 +1,4 @@
+import { championships } from './../../generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 import { Stauts } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma.service';
@@ -65,6 +66,18 @@ export class SessionsRepo {
   async findById(sessionId: number) {
     return this.prisma.sessions.findUnique({
       where: { id: sessionId },
+    });
+  }
+
+  async findAll() {
+    return this.prisma.sessions.findMany();
+  }
+
+  async findByMeetingId(meetingId: number) {
+    return this.prisma.sessions.findMany({
+      where: {
+        meeting_id: meetingId,
+      },
     });
   }
 

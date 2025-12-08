@@ -1,20 +1,21 @@
-import { Transform } from 'class-transformer';
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsDate, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateMeetingDto {
-  @IsNumber()
-  @IsOptional()
-  championship_id?: number;
-  @IsNumber()
-  round_number?: number;
+  @ApiProperty({
+    description: 'Name of the round',
+    example: 'Round 1',
+  })
   @IsString()
-  @Transform(({ value }) => value.trim())
   @IsOptional()
   name?: string;
-  @IsDate()
+
+  @ApiProperty({
+    description: 'Datetime when the Meeting will take place',
+    example: '2025-12-09T18:00:00.000Z',
+  })
   @IsOptional()
+  @Type(() => Date)
   start_date?: Date;
-  @IsDate()
-  @IsOptional()
-  end_date?: Date;
 }

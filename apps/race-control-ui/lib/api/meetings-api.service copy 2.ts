@@ -2,7 +2,7 @@
 
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
-import { Championships, Meetings } from '../types';
+import { Meetings } from '../types';
 
 export class MeetingsApiService {
   private static instance: MeetingsApiService;
@@ -23,10 +23,10 @@ export class MeetingsApiService {
   }
 
   async getAll(): Promise<Meetings[]> {
-    return this.baseClient.get<Meetings[]>(ENDPOINTS.CHAMPIONSHIPS.GET);
+    return this.baseClient.get<Meetings[]>(ENDPOINTS.MEETINGS.GET);
   }
   async getById(id: number): Promise<Meetings> {
-    return this.baseClient.get<Meetings>(ENDPOINTS.CHAMPIONSHIPS.GET_ID(id));
+    return this.baseClient.get<Meetings>(ENDPOINTS.MEETINGS.GET_ID(id));
   }
 }
 

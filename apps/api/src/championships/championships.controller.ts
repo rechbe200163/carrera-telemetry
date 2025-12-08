@@ -31,17 +31,17 @@ export class ChampionshipsController {
     return this.championshipsService.findOne(+id);
   }
 
+  @Get('meeting/:id')
+  findOneByMeetingId(@Param('id', ParseIntPipe) id: number) {
+    return this.championshipsService.findByMettingId(id);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateChampionShipDto: UpdateChampionShipDto,
   ) {
     return this.championshipsService.update(+id, updateChampionShipDto);
-  }
-
-  @Post(':id/start')
-  genNextMeeting(@Param('id', ParseIntPipe) id: number) {
-    return this.championshipsService.createNextMeeting(id);
   }
 
   @Delete(':id')

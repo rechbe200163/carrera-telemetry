@@ -15,16 +15,15 @@ export class ChampionshipsService {
     const cs = await this.championshipsRepo.create(createChampionshipDto);
   }
 
-  createNextMeeting(championshipId: number) {
-    return this.meetingsRepo.createMeetingWithDefaultSessions(championshipId);
-  }
-
   findAll() {
     return this.championshipsRepo.findAll();
   }
 
   findOne(id: number) {
     return this.championshipsRepo.findOneById(id);
+  }
+  findByMettingId(meetingId: number) {
+    return this.championshipsRepo.findByMettingId(meetingId);
   }
 
   update(id: number, updateChampionShipDto: UpdateChampionShipDto) {

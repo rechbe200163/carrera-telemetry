@@ -1,22 +1,24 @@
 'use server';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '../api-client';
+import { ENDPOINTS } from '../enpoints';
 import { FormState } from '../fom.types';
-import { ENDPOINTS } from '@/lib/enpoints';
 
 export async function createMeetingsAction(
+  championshipId: number,
   _prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  const rawDate = formData.get('date') as string | null;
+
   const payload = {
     name: String(formData.get('name') ?? ''),
-    season: Number(formData.get('season') ?? ''),
-    planned_meetings: Number(formData.get('plannedMeetings') ?? ''),
+    start_date: rawDate ? new Date(rawDate) : null,
   };
 
-  console.log(JSON.stringify(payload, null, 2));
+  console.log(payload);
 
   return apiClient.safePost<any, typeof payload>(
-    ENDPOINTS.CHAMPIONSHIPS.POST,
+    ENDPOINTS.MEETINGS.POST_GEN_NEXT_MEETING(championshipId),
     payload
   );
 }
