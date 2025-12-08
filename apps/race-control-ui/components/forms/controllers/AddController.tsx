@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '../../ui/button';
-import { Plus } from 'lucide-react';
+import { Gamepad2, Plus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -25,6 +25,7 @@ import {
 import { createControllerAction } from '@/lib/actions/controller.actions';
 import { NativeSelect, NativeSelectOption } from '../../ui/native-select';
 import { Radio, RadioGroup, RadioGroupItem } from '../../ui/radio-group';
+import { controllerColors, controllerIcons } from '@/lib/utils';
 
 const AddControllerForm = ({
   availableAddresses,
@@ -37,8 +38,6 @@ const AddControllerForm = ({
     createControllerAction,
     initialState
   );
-
-  const controllerIcons = ['🔵', '🔴', '🟢', '🟡', '⚪', '🟠', '🟣', '🟤'];
 
   return (
     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -92,17 +91,18 @@ const AddControllerForm = ({
             <div className='space-y-2'>
               <Label>Visueller Marker</Label>
               <RadioGroup
-                name='icon'
+                name='iconColor'
                 className='grid grid-cols-4 gap-2'
-                defaultValue='🔵'
+                defaultValue='blue'
               >
-                {controllerIcons.map((icon) => (
+                {controllerColors.map((c) => (
                   <Label
-                    key={icon}
-                    className='flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-muted data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary'
+                    key={c.key}
+                    className='flex items-center justify-center p-2 border rounded-lg cursor-pointer 
+                 hover:bg-muted data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary'
                   >
-                    <Radio value={icon} className='hidden' />
-                    <span className='text-xl'>{icon}</span>
+                    <Radio value={c.key} className='hidden' />
+                    <Gamepad2 className={`h-6 w-6 red`} />
                   </Label>
                 ))}
               </RadioGroup>

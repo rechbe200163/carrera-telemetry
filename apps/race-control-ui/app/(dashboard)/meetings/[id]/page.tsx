@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Clock, RotateCcw, Eye } from 'lucide-react';
+import { ArrowRight, Clock, RotateCcw, Eye, Waypoints } from 'lucide-react';
 import Link from 'next/link';
 import { meetingsApiService } from '@/lib/api/meetings-api.service copy 2';
 import { StatusBadge } from '@/components/status-badge';
 import { championshipsApiService } from '@/lib/api/championship-api.service';
 import { sessionsApiService } from '@/lib/api/session-api.service';
 import { SessionTypeBadge } from '@/components/session-type-badge';
+import { SessionType } from '@/lib/types';
 
 export default async function MeetingDetailPage({
   params,
@@ -20,14 +21,14 @@ export default async function MeetingDetailPage({
 
   console.log('sessions', sessions);
 
-  const getSessionIcon = (type: string) => {
+  const getSessionIcon = (type: SessionType) => {
     switch (type) {
       case 'PRACTICE':
         return <Clock className='h-5 w-5' />;
       case 'QUALYFING':
         return <Clock className='h-5 w-5' />;
       case 'RACE':
-        return <RotateCcw className='h-5 w-5' />;
+        return <Waypoints className='h-5 w-5' />;
       default:
         return <Clock className='h-5 w-5' />;
     }
@@ -66,7 +67,10 @@ export default async function MeetingDetailPage({
               >
                 <CardHeader className='pb-3'>
                   <div className='flex items-center justify-between'>
-                    <SessionTypeBadge type={session.session_type} />
+                    <div className='flex items-center gap-2'>
+                      <SessionTypeBadge type={session.session_type} />
+                      {getSessionIcon(session.session_type)}
+                    </div>
                     <StatusBadge status={session.status} size='sm' />
                   </div>
                 </CardHeader>
@@ -83,7 +87,7 @@ export default async function MeetingDetailPage({
                       <div className='rounded-lg bg-secondary/50 p-3'>
                         <p className='text-xs text-muted-foreground'>Dauer</p>
                         <p className='text-xl font-bold font-mono'>
-                          {session.time_limit_seconds} sec
+                          {session.time_limit_seconds || '-'}
                         </p>
                       </div>
                     )}

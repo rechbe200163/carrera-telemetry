@@ -35,8 +35,8 @@ export async function updateControllerAction(
   const address = formData.get('address');
   if (address) payload.address = Number(address);
 
-  const icon = formData.get('icon');
-  if (icon) payload.icon = String(icon);
+  const iconColor = formData.get('iconColor');
+  if (iconColor) payload.icon = String(iconColor);
 
   const notes = formData.get('notes');
   if (notes) payload.notes = String(notes);

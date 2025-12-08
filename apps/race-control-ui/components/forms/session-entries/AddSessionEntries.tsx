@@ -21,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Gamepad2, Plus } from 'lucide-react';
 import { Controllers, Drivers } from '@/lib/types';
 import { createSessionEntriesAction } from '@/lib/actions/session-entries.actions';
+import { controllerColors } from '@/lib/utils';
 
 type AddSessionEntryFormProps = {
   sessionId: string | number;
@@ -103,27 +104,37 @@ export function AddSessionEntryForm({
                 <SelectValue placeholder='Controller wählen…' />
               </SelectTrigger>
               <SelectContent>
-                {controllers.map((controller) => (
-                  <SelectItem
-                    key={controller.id}
-                    value={controller.address.toString()}
-                  >
-                    <div className='flex items-center gap-2'>
-                      {controller.icon && <span>{controller.icon}</span>}
-                      <span>Addresse {controller.address}</span>
-                      {controller.name && (
-                        <span className='text-muted-foreground text-xs'>
-                          ({controller.name})
-                        </span>
-                      )}
-                      {controller.notes && (
-                        <span className='text-muted-foreground text-xs'>
-                          - {controller.notes}
-                        </span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
+                {controllers.map((controller) => {
+                  const color = controllerColors.find(
+                    (c) => c.key === controller.icon
+                  )?.color;
+
+                  return (
+                    <SelectItem
+                      key={controller.id}
+                      value={controller.address.toString()}
+                    >
+                      <div className='flex items-center gap-2'>
+                        {controller.icon && (
+                          <span>
+                            <Gamepad2 className={`h-6 w-6 ${color}`} />
+                          </span>
+                        )}
+                        <span>Addresse {controller.address}</span>
+                        {controller.name && (
+                          <span className='text-muted-foreground text-xs'>
+                            ({controller.name})
+                          </span>
+                        )}
+                        {controller.notes && (
+                          <span className='text-muted-foreground text-xs'>
+                            - {controller.notes}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             {formState.errors?.controllerAddress && (

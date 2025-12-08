@@ -30,6 +30,7 @@ import EditController from '../forms/controllers/EditController';
 import DeleteDriver from '../forms/drivers/DeleteDriver';
 import DeleteController from '../forms/controllers/DeleteController';
 import { Controllers } from '@/lib/types';
+import { controllerColors } from '@/lib/utils';
 function ControllerTable({
   controllers,
   availableAddresses,
@@ -72,33 +73,40 @@ function ControllerTable({
           <TableBody>
             {controllers
               .sort((a, b) => a.address - b.address)
-              .map((controller) => (
-                <TableRow key={controller.id} className='border-border'>
-                  <TableCell>
-                    <span className='text-2xl'>{controller.icon}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className='font-medium'>{controller.name}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className='inline-flex items-center gap-2 rounded-md bg-secondary px-2 py-1 font-mono text-sm font-medium'>
-                      Addr {controller.address}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className='text-sm text-muted-foreground'>
-                      {controller.notes || '-'}
-                    </span>
-                  </TableCell>
-                  <TableCell className='text-right'>
-                    <EditController
-                      controller={controller}
-                      availableAddresses={availableAddresses}
-                    />
-                    <DeleteController controllerId={controller.id} />
-                  </TableCell>
-                </TableRow>
-              ))}
+              .map((controller) => {
+                const color = controllerColors.find(
+                  (c) => c.key === controller.icon
+                )?.color;
+                return (
+                  <TableRow key={controller.id} className='border-border'>
+                    <TableCell>
+                      <span className='text-2xl'>
+                        <Gamepad2 className={`h-6 w-6 ${color}`} />
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className='font-medium'>{controller.name}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className='inline-flex items-center gap-2 rounded-md bg-secondary px-2 py-1 font-mono text-sm font-medium'>
+                        Addr {controller.address}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className='text-sm text-muted-foreground'>
+                        {controller.notes || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <EditController
+                        controller={controller}
+                        availableAddresses={availableAddresses}
+                      />
+                      <DeleteController controllerId={controller.id} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       </CardContent>

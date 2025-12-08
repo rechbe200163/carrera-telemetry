@@ -1,3 +1,4 @@
+'use server';
 import { apiClient } from '../api-client';
 import { ENDPOINTS } from '../enpoints';
 import { FormState } from '../fom.types';
@@ -19,13 +20,17 @@ export async function startSessionAction(
     lapLimit?: number;
   } = {};
 
+  console.log(sessionType);
+
   if (isRace) {
     if (lapLimitRaw) {
       payload.lapLimit = Number(lapLimitRaw);
+      console.log(lapLimitRaw);
     }
   } else {
     if (durationRaw) {
       payload.durationMinutes = Number(durationRaw);
+      console.log(durationRaw);
     }
   }
 

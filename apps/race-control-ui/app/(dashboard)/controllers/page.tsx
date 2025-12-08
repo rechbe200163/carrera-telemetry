@@ -13,8 +13,6 @@ export default async function ControllersPage() {
     (addr) => !usedAddresses.includes(addr)
   );
 
-  console.log(availableAddresses);
-
   return (
     <div className='flex flex-col'>
       <div className='p-6 space-y-6'>

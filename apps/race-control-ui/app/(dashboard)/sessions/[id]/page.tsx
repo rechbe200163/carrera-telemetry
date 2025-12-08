@@ -14,6 +14,8 @@ import { StartSessionForm } from '@/components/forms/sessions/start-session-form
 import { AddSessionEntryForm } from '@/components/forms/session-entries/AddSessionEntries';
 import { driverApiService } from '@/lib/api/driver-api.service';
 import { controllerApiService } from '@/lib/api/controller-api.service copy';
+import { RaceSessionStatus } from '@/components/race-session-status';
+import { TimedSessionCountdown } from '@/components/timed-session-countdown';
 
 export default async function SessionDetailPage({
   params,
@@ -112,21 +114,15 @@ export default async function SessionDetailPage({
                       </span>
                     </div>
                     {session.session_type === 'RACE' ? (
-                      <div className='flex items-center justify-center gap-2'>
-                        <RotateCcw className='h-4 w-4 text-muted-foreground' />
-                        <span className='font-mono text-2xl font-bold'>
-                          {session.lap_limit ?? '-'}
-                        </span>
-                        <span className='text-muted-foreground'>Runden</span>
-                      </div>
+                      <RaceSessionStatus
+                        lapLimit={session.lap_limit!}
+                        // optional: wenn du pro Session einen eigenen SSE-Endpoint hast:
+                        // sseUrl={`http://localhost:3333/laps/sse?sessionId=${session.id}`}
+                      />
                     ) : (
-                      <div className='flex items-center justify-center gap-2'>
-                        <Clock className='h-4 w-4 text-muted-foreground' />
-                        <span className='font-mono text-2xl font-bold'>
-                          {session.time_limit_seconds ?? '-'}
-                        </span>
-                        <span className='text-muted-foreground'>min</span>
-                      </div>
+                      <TimedSessionCountdown
+                        timeLimitSeconds={session.time_limit_seconds!}
+                      />
                     )}
                   </div>
                   <Button variant='destructive' className='w-full'>

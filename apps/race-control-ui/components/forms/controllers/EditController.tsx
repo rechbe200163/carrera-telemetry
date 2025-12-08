@@ -10,13 +10,14 @@ import {
   DialogTrigger,
 } from '../../ui/dialog';
 import { Button } from '../../ui/button';
-import { Pencil } from 'lucide-react';
+import { Gamepad2, Pencil } from 'lucide-react';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { FormState, initialState } from '@/lib/fom.types';
 import { NativeSelect, NativeSelectOption } from '../../ui/native-select';
 import { Radio, RadioGroup } from '../../ui/radio-group';
 import { updateControllerAction } from '@/lib/actions/controller.actions';
+import { controllerColors, controllerIcons } from '@/lib/utils';
 
 const EditController = ({
   controller,
@@ -33,8 +34,6 @@ const EditController = ({
     initialState
   );
 
-  const controllerIcons = ['🔵', '🔴', '🟢', '🟡', '⚪', '🟠', '🟣', '🟤'];
-  console.log(availableAddresses);
   return (
     <Dialog
       open={editingController?.id === controller.id}
@@ -88,20 +87,22 @@ const EditController = ({
             <div className='space-y-2'>
               <Label>Visueller Marker</Label>
               <RadioGroup
-                name='icon'
+                name='iconColor'
                 className='grid grid-cols-4 gap-2'
-                defaultValue={controller.icon}
+                defaultValue='blue'
               >
-                {controllerIcons.map((icon) => (
+                {controllerColors.map((c) => (
                   <Label
-                    key={icon}
-                    className='flex items-center justify-center p-2 border rounded-lg cursor-pointer hover:bg-muted data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary'
+                    key={c.key}
+                    className='flex items-center justify-center p-2 border rounded-lg cursor-pointer 
+                 hover:bg-muted data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary'
                   >
-                    <Radio value={icon} className='hidden' />
-                    <span className='text-xl'>{icon}</span>
+                    <Radio value={c.key} className='hidden' />
+                    <Gamepad2 className={`h-6 w-6 ${c.color}`} />
                   </Label>
                 ))}
               </RadioGroup>
+
               {formState.errors?.name && (
                 <p className='text-sm text-red-500'>
                   {formState.errors.name.join(', ')}
