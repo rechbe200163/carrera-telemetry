@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
 import { meetingsApiService } from '@/lib/api/meetings-api.service copy 2';
 import { championshipsApiService } from '@/lib/api/championship-api.service';
+import AddMeetingsForm from '@/components/forms/meetings/AddMeeting';
 
 export default async function ChampionshipDetailPage({
   params,
@@ -18,6 +19,8 @@ export default async function ChampionshipDetailPage({
   const meetings = await meetingsApiService.getAllByChampionsshipId(Number(id));
   const driverStandings =
     await driverStandingsApiService.getStandingsByChampionship(Number(id));
+
+  console.log();
 
   return (
     <div className='flex flex-col'>
@@ -31,13 +34,10 @@ export default async function ChampionshipDetailPage({
               </h1>
             </div>
             <p className='text-muted-foreground'>
-              Season {championship.season}
+              Saison {championship.season}
             </p>
           </div>
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            Nächstes Meeting
-          </Button>
+          <AddMeetingsForm championshipId={Number(id)} />
         </div>
 
         <div className='grid gap-6 lg:grid-cols-3'>
