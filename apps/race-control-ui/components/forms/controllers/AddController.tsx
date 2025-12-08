@@ -128,7 +128,14 @@ const AddControllerForm = ({
             )}
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsAddOpen(false)}>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={(e) => {
+                e.preventDefault();
+                setIsAddOpen(false);
+              }}
+            >
               Abbrechen
             </Button>
             <Button type='submit' disabled={isPending}>

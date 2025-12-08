@@ -23,6 +23,7 @@ export default async function SessionDetailPage({
   const { id } = await params;
 
   const session = await sessionsApiService.getById(Number(id));
+  console.log(session);
   const meetingId = session.meeting_id;
   const meeting = await meetingsApiService.getById(meetingId);
   const championshipId = meeting.championship_id;
@@ -56,8 +57,10 @@ export default async function SessionDetailPage({
   }
 
   // Session Entries für diese Session
-  const sessionEntries =
-    await sessionsEntriesApiService.getBySessionId(meetingId);
+  const sessionEntries = await sessionsEntriesApiService.getBySessionId(
+    session.id
+  );
+  console.log(sessionEntries);
 
   const hasEntries = sessionEntries.length > 0;
 
@@ -178,19 +181,19 @@ export default async function SessionDetailPage({
                       className='flex items-center justify-between rounded-lg bg-secondary/30 px-4 py-3'
                     >
                       <div className='flex items-center gap-4'>
-                        <DriverBadge driver={entry.drivers} showName />
+                        <DriverBadge driver={entry.drivers!} showName />
                       </div>
                       <div className='flex items-center gap-6'>
                         <div className='text-right'>
                           <p className='text-xs text-muted-foreground'>
-                            Controller
+                            Kontroller
                           </p>
                           <p className='font-mono font-medium'>
-                            Lane {entry.controller_address + 1}
+                            Addresse {entry.controller_address}
                           </p>
                         </div>
                         <div className='min-w-32 text-right'>
-                          <p className='text-xs text-muted-foreground'>Car</p>
+                          <p className='text-xs text-muted-foreground'>Auto</p>
                           <p className='text-sm'>{entry.car_label || '-'}</p>
                         </div>
                       </div>

@@ -26,15 +26,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Controller } from '@/lib/types';
 import EditController from '../forms/controllers/EditController';
 import DeleteDriver from '../forms/drivers/DeleteDriver';
 import DeleteController from '../forms/controllers/DeleteController';
+import { Controllers } from '@/lib/types';
 function ControllerTable({
   controllers,
   availableAddresses,
 }: {
-  controllers: Controller[];
+  controllers: Controllers[];
   availableAddresses: number[];
 }) {
   return (
@@ -93,7 +93,7 @@ function ControllerTable({
                   <TableCell className='text-right'>
                     <EditController
                       controller={controller}
-                      availableAddresses={[]} // ggf. real verfügbare Adressen hier setzen
+                      availableAddresses={availableAddresses}
                     />
                     <DeleteController controllerId={controller.id} />
                   </TableCell>

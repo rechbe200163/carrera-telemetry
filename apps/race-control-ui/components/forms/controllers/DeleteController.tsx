@@ -12,19 +12,21 @@ const DeleteController = ({ controllerId }: { controllerId: number }) => {
   );
 
   return (
-    <Button
-      variant='ghost'
-      size='icon'
-      type='submit'
-      className='text-destructive hover:text-destructive'
-      onClick={() => console.log('deleted')}
-    >
-      {isPending ? (
-        <Loader2 className='animate-spin' />
-      ) : (
-        <Trash2 className='h-4 w-4' />
-      )}
-    </Button>
+    <form action={action}>
+      <Button
+        variant='ghost'
+        size='icon'
+        type='submit'
+        formAction={action}
+        className='text-destructive hover:text-destructive'
+      >
+        {isPending ? (
+          <Loader2 className='animate-spin' />
+        ) : (
+          <Trash2 className='h-4 w-4' />
+        )}
+      </Button>
+    </form>
   );
 };
 

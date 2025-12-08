@@ -1,8 +1,8 @@
+import { Drivers } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import type { Driver } from '@/lib/types';
 
 interface DriverBadgeProps {
-  driver: Driver;
+  driver: Drivers;
   showName?: boolean;
   size?: 'sm' | 'default' | 'lg';
 }

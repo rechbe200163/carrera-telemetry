@@ -34,7 +34,7 @@ const EditController = ({
   );
 
   const controllerIcons = ['🔵', '🔴', '🟢', '🟡', '⚪', '🟠', '🟣', '🟤'];
-
+  console.log(availableAddresses);
   return (
     <Dialog
       open={editingController?.id === controller.id}
@@ -57,7 +57,7 @@ const EditController = ({
           <div className='space-y-4 py-4'>
             <div className='space-y-2'>
               <Label htmlFor='name'>Name</Label>
-              <Input id='name' placeholder='Controller 1' name='name' />
+              <Input id='name' defaultValue={controller.name} name='name' />
               {formState.errors?.name && (
                 <p className='text-sm text-red-500'>
                   {formState.errors.name.join(', ')}
@@ -65,10 +65,13 @@ const EditController = ({
               )}
             </div>
             <div className='space-y-2'>
-              <Label> Kontroller Addresse (0-5)</Label>
-              <NativeSelect name='controllerAddress'>
+              <Label> Kontroller Addresse (1-6)</Label>
+              <NativeSelect
+                name='controllerAddress'
+                defaultValue={controller.address}
+              >
                 <NativeSelectOption>
-                  Kontroller Addresse (0-5)
+                  Kontroller Addresse (1-6)
                 </NativeSelectOption>
                 {availableAddresses.map((addr) => (
                   <NativeSelectOption key={addr} value={String(addr)}>
@@ -87,7 +90,7 @@ const EditController = ({
               <RadioGroup
                 name='icon'
                 className='grid grid-cols-4 gap-2'
-                defaultValue='🔵'
+                defaultValue={controller.icon}
               >
                 {controllerIcons.map((icon) => (
                   <Label
@@ -111,6 +114,7 @@ const EditController = ({
               <Input
                 id='notes'
                 placeholder='z.B. Blaues Käppchen'
+                defaultValue={controller.notes}
                 name='notes'
               />
             </div>
@@ -122,8 +126,12 @@ const EditController = ({
           </div>
           <DialogFooter>
             <Button
+              type='button'
               variant='outline'
-              onClick={() => setEditingController(null)}
+              onClick={(e) => {
+                e.preventDefault();
+                setEditingController(null);
+              }}
             >
               Abbrechen
             </Button>
