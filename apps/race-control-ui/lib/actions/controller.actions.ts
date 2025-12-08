@@ -30,10 +30,10 @@ export async function updateControllerAction(
   const payload: Record<string, unknown> = {};
 
   const name = formData.get('name');
-  if (name) payload.first_name = String(name);
+  if (name) payload.name = String(name);
 
   const address = formData.get('address');
-  if (address) payload.last_name = Number(address);
+  if (address) payload.address = Number(address);
 
   const icon = formData.get('icon');
   if (icon) payload.icon = String(icon);

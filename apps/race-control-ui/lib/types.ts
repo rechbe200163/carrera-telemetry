@@ -1,3 +1,6 @@
+import { Session } from './../../api/src/sessions/entities/session.entity';
+import { Inter } from 'next/font/google';
+
 // enums
 export type Stauts = 'PLANNED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
 export type SessionType = 'FUN' | 'PRACTICE' | 'QUALYFING' | 'RACE';
@@ -139,4 +142,8 @@ export interface LeaderBoard {
   championship: Pick<DriverStandings, 'points_total' | 'wins' | 'podiums'> & {
     position: number;
   };
+}
+
+export interface SessionEntriesWithDrivers extends SessionEntries {
+  drivers: Pick<Drivers, 'code' | 'color' | 'last_name' | 'first_name'>;
 }

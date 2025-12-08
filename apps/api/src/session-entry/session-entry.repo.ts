@@ -16,6 +16,9 @@ export class SessionEntriesRepo {
     const entries = await this.prisma.session_entries.findMany({
       where: { session_id: sessionId },
       orderBy: [{ controller_address: 'asc' }],
+      include: {
+        drivers: true,
+      },
     });
     return entries;
   }

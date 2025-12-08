@@ -17,9 +17,12 @@ export class SessionsEntriesApiService {
   private constructor(private readonly baseClient = apiClient) {}
 
   async getBySessionId(sessionId: number): Promise<SessionEntries[]> {
-    return this.baseClient.get<SessionEntries[]>(
+    console.log(ENDPOINTS.SESSION_ENTRIES.GET_BY_SESSION_ID(sessionId));
+    const data = await this.baseClient.get<SessionEntries[]>(
       ENDPOINTS.SESSION_ENTRIES.GET_BY_SESSION_ID(sessionId)
     );
+    console.log(data);
+    return data;
   }
 }
 

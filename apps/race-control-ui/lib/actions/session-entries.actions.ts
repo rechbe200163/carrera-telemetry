@@ -13,11 +13,11 @@ export async function createSessionEntriesAction(
   const carLabelRaw = formData.get('carLabel');
 
   const payload = {
-    driverId: driverIdRaw ? Number(driverIdRaw) : null,
-    controllerAddress: controllerAddressRaw
+    driver_id: driverIdRaw ? Number(driverIdRaw) : null,
+    controller_address: controllerAddressRaw
       ? Number(controllerAddressRaw)
       : null,
-    carLabel: carLabelRaw ? String(carLabelRaw) : null,
+    car_label: carLabelRaw ? String(carLabelRaw) : null,
   };
 
   // Optional: minimal Logging
