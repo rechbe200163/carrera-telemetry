@@ -27,13 +27,13 @@ export class SessionsService {
             'durationMinutes required for practice/quali',
           );
         }
-        const seconds = dto.durationMinutes * 60;
 
         await this.sessionsRepo.startSession(sessionId, {
-          time_limit_seconds: seconds,
+          time_limit_seconds: dto.durationMinutes,
           lap_limit: null,
         });
 
+        const seconds = dto.durationMinutes * 60;
         await this.mqttService.publish('race_control/sessions/start', {
           sessionId,
           mode: 'TIME',
@@ -41,6 +41,7 @@ export class SessionsService {
           lapLimit: null,
           sessionType: session.session_type,
         });
+        break;
       case 'RACE':
         if (!dto.lapLimit) {
           throw new BadRequestException('lapLimit required for race');
@@ -58,6 +59,7 @@ export class SessionsService {
           lapLimit: dto.lapLimit,
           sessionType: session.session_type,
         });
+        break;
       case 'FUN':
         throw new NotImplementedException(
           'this functionality is yet to be implemented',
