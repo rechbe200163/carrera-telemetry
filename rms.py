@@ -26,8 +26,17 @@ MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "mqtt_pass")
 # Nur Lap-Events – genau EIN Topic mit Runde + Sektorzeiten
 TOPIC_LAP = os.getenv("MQTT_TOPIC_LAP_TIMES", "carrera/cu/lapTimes")
 
-# Optional: Raw Timer Events (für Debugging); kannst du auch einfach ignorieren
+# Optional: Raw Timer Events (für Debugging)
 TOPIC_RAW = os.getenv("MQTT_TOPIC_TIMER_RAW", "carrera/cu/timerRaw")
+
+# Control-Topics vom Backend
+TOPIC_SESSION_START = os.getenv(
+    "MQTT_TOPIC_SESSION_START", "race_control/sessions/start"
+)
+TOPIC_SESSION_STOP = os.getenv("MQTT_TOPIC_SESSION_STOP", "race_control/sessions/stop")
+TOPIC_SESSION_ACTIVE = os.getenv(
+    "MQTT_TOPIC_SESSION_ACTIVE", "race_control/sessions/active"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -57,15 +66,15 @@ def create_mqtt_client() -> mqtt.Client:
 
 
 # ---------------------------------------------------------------------------
-# CU → MQTT Bridge (nur Lap-Events mit Sektorzeiten)
+# CU → MQTT Bridge (Lap-Events mit Session-ID)
 # ---------------------------------------------------------------------------
 
 
 class CarreraMqttBridge:
     """
     Liest Timer-Events aus der Carrera Control Unit
-    und publisht NUR nach jeder vollständigen Runde ein Lap-Event
-    mit LapTime + Sektor1 + Sektor2.
+    und publisht nach jeder vollständigen Runde ein Lap-Event
+    mit LapTime + Sektor1 + Sektor2 + sessionId.
     """
 
     def __init__(self, device: str, mqtt_client: mqtt.Client):
@@ -73,10 +82,82 @@ class CarreraMqttBridge:
         self.mqtt = mqtt_client
         self.cu: Optional[ControlUnit] = None
 
+        # Aktive Session-ID (vom Backend gesetzt)
+        self.current_session_id: Optional[int] = None
+
         # Pro Controller-Adresse:
         self.last_s1_ts: Dict[int, Optional[int]] = {}
         self.last_s2_ts: Dict[int, Optional[int]] = {}
         self.lap_counter: Dict[int, int] = {}
+
+        # MQTT-Control-Topics abonnieren
+        self.setup_mqtt_subscriptions()
+
+    # ---------------------------------------------------------------------
+    def start_cu_race(self):
+        """
+        Triggert den offiziellen Rennstart an der Control Unit.
+        Dadurch gehen auch die Startlichter / Startampel los.
+        Entspricht im Prinzip dem Drücken der START-Taste an der CU.
+        """
+        if self.cu is None:
+            logging.warning("CU not connected - cannot start race")
+            return
+
+        logging.info("Sending start command to CU ...")
+        try:
+            self.cu.start()
+        except Exception as e:
+            logging.error(f"Error while starting race on CU: {e}")
+
+    def setup_mqtt_subscriptions(self):
+        """
+        Abonniert Control-Topics vom Backend, um sessionId zu setzen/zu löschen.
+        """
+
+        def on_message(client, userdata, msg):
+            try:
+                payload = json.loads(msg.payload.decode("utf-8"))
+            except json.JSONDecodeError:
+                logging.warning(f"Invalid JSON on topic {msg.topic}")
+                return
+
+            if msg.topic == TOPIC_SESSION_START:
+                # Erwartet: { "sessionId": 123, ... }
+                session_id = payload.get("sessionId")
+                if session_id is not None:
+                    self.current_session_id = int(session_id)
+                    logging.info(
+                        f"[SESSION] Start session_id={self.current_session_id}"
+                    )
+
+                    # Timer-State für neue Session zurücksetzen
+                    self.last_s1_ts.clear()
+                    self.last_s2_ts.clear()
+                    self.lap_counter.clear()
+
+                    # CU-Start -> Startampel/Tower
+                    self.start_cu_race()
+
+            elif msg.topic == TOPIC_SESSION_STOP:
+                logging.info(
+                    f"[SESSION] Stop received for session_id={self.current_session_id}"
+                )
+                self.current_session_id = None
+                # Du könntest hier zusätzlich die CU stoppen/resetten,
+                # je nachdem was carreralib anbietet:
+                # self.cu.stop() oder self.cu.reset()
+
+        # WICHTIG: on_message nur hier setzen
+        self.mqtt.on_message = on_message
+
+        # Control-Topics abonnieren
+        self.mqtt.subscribe(TOPIC_SESSION_START)
+        self.mqtt.subscribe(TOPIC_SESSION_STOP)
+
+        logging.info(
+            f"Subscribed to control topics: {TOPIC_SESSION_START}, {TOPIC_SESSION_STOP}"
+        )
 
     # ---------------------------------------------------------------------
 
@@ -114,7 +195,7 @@ class CarreraMqttBridge:
         cu_ts = t.timestamp
         wall_ts = int(time.time() * 1000)
 
-        # Optional: Raw Event publishen (Debug/Logging)
+        # Raw Event publishen (Debug)
         self.publish(
             TOPIC_RAW,
             {
@@ -122,6 +203,7 @@ class CarreraMqttBridge:
                 "sector": sector,
                 "cuTimestampMs": cu_ts,
                 "wallClockTs": wall_ts,
+                "sessionId": self.current_session_id,
             },
         )
 
@@ -133,7 +215,6 @@ class CarreraMqttBridge:
 
         # --------------------- Sector 2: Mitte der Runde -------------------
         if sector == 2:
-            # einfach nur merken, wann der Fahrer durch Sektor 2 ist
             self.last_s2_ts[addr] = cu_ts
             logging.debug(f"addr={addr} hit S2 at {cu_ts}ms")
             return
@@ -145,7 +226,6 @@ class CarreraMqttBridge:
 
             # Für die allererste Überfahrt über Start/Ziel haben wir keine Runde
             if prev_s1 is not None and prev_s2 is not None and prev_s2 > prev_s1:
-                # Runde ist komplett: S1(prev) -> S2(prev) -> S1(aktuell)
                 s1_time = prev_s2 - prev_s1
                 s2_time = cu_ts - prev_s2
                 lap_time = cu_ts - prev_s1
@@ -155,6 +235,7 @@ class CarreraMqttBridge:
 
                 payload = {
                     "eventType": "lap",
+                    "sessionId": self.current_session_id,
                     "controllerAddress": addr,
                     "lapNumber": lap_nr,
                     "lapTimeMs": lap_time,
@@ -166,13 +247,19 @@ class CarreraMqttBridge:
                     "wallClockTs": wall_ts,
                 }
 
+                # Wenn du willst, dass NUR mit aktiver Session publisht wird:
+                # if self.current_session_id is not None:
+                #     self.publish(TOPIC_LAP, payload)
+
                 self.publish(TOPIC_LAP, payload)
+
                 logging.info(
                     f"LAP addr={addr} lap={lap_nr} "
-                    f"lapTime={lap_time}ms s1={s1_time}ms s2={s2_time}ms"
+                    f"lapTime={lap_time}ms s1={s1_time}ms s2={s2_time}ms "
+                    f"sessionId={self.current_session_id}"
                 )
 
-            # Aktuelles Start/Ziel immer als neuer Referenzpunkt merken
+            # Aktuelles Start/Ziel als neuer Referenzpunkt merken
             self.last_s1_ts[addr] = cu_ts
             return
 
@@ -189,12 +276,10 @@ class CarreraMqttBridge:
         try:
             while True:
                 msg = self.cu.poll()
-                # msg ist entweder ControlUnit.Status oder ControlUnit.Timer
                 if isinstance(msg, ControlUnit.Timer):
                     self.handle_timer_event(msg)
-                # Status interessiert uns hier nicht – könnte man später nach MQTT schieben.
         except KeyboardInterrupt:
-            logging.info("KeyboardInterrupt – shutting down bridge ...")
+            logging.info("KeyboardInterrupt - shutting down bridge ...")
         finally:
             if self.cu is not None:
                 self.cu.close()
