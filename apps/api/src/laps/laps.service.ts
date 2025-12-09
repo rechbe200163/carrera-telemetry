@@ -1,9 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateLapDto } from './dto/create-lap.dto';
 import { UpdateLapDto } from './dto/update-lap.dto';
+import { Observable, Subject } from 'rxjs';
+import { LapsRepo } from './laps.repo';
 
 @Injectable()
 export class LapsService {
+  private readonly logger = new Logger(LapsService.name);
+  private readonly lapStream$ = new Subject<MessageEvent>();
+
+  constructor(private readonly lapsRepo: LapsRepo) {}
+
+  // Wird von deinem MQTT-Consumer benutzt
+  async createFromEvent(dto: CreateLapDto) {
+    const lap = await this.lapsRepo.create(dto);
+
+    // Live-Update für SSE raushauen
+    this.lapStream$.next({
+      // du kannst hier auch "event: 'lap'" setzen, wenn du willst
+      data: {
+        type: 'lap',
+        lap,
+      },
+    } as MessageEvent);
+
+    return lap;
+  }
+
   create(createLapDto: CreateLapDto) {
     return 'This action adds a new lap';
   }

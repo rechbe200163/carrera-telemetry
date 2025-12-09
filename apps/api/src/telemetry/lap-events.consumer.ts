@@ -1,5 +1,4 @@
-import { session_entries } from './../../generated/prisma/client';
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { LapsRepo } from 'src/laps/laps.repo';
 import { MqttService } from 'src/mqtt/mqtt.service';
 import { SessionsRepo } from 'src/sessions/sessions.repo';
@@ -28,7 +27,6 @@ export class LapEventsConsumer implements OnModuleInit {
   }
 
   private async handleSessionActiveEvent(payload: any) {
-    // payload: { sessionId: 12 }   oder { sessionId: null } zum Clearen
     const sessionId = payload.sessionId as number | null;
 
     if (!sessionId) {
@@ -41,8 +39,8 @@ export class LapEventsConsumer implements OnModuleInit {
     this.controllerMap.clear();
 
     const session = await this.sessionsRepo.listEntriesForSession(sessionId);
-    if (!session) return;
-    if (!session.session_entries) return;
+    if (!session?.session_entries) return;
+
     for (const e of session.session_entries) {
       this.controllerMap.set(e.controller_address, e.driver_id);
     }
