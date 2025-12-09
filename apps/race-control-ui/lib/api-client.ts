@@ -2,8 +2,8 @@ import { FormState } from './fom.types';
 
 const BASE_URL =
   process.env.NODE_ENV === 'production'
-    ? process.env.API_URL_PROD || ''
-    : process.env.API_URL || 'http://localhost:3333';
+    ? process.env.API_URL_PROD
+    : process.env.API_URL;
 
 export class ApiError extends Error {
   constructor(
@@ -16,7 +16,7 @@ export class ApiError extends Error {
 }
 
 export class ApiClient {
-  constructor(private baseUrl: string = BASE_URL) {}
+  constructor(private baseUrl: string = BASE_URL!) {}
 
   // Low-level Request (für Daten-Fetching, Server Components, etc.)
   private async request<TResponse, TBody = unknown>(
@@ -24,6 +24,7 @@ export class ApiClient {
     method: string,
     body?: TBody
   ): Promise<TResponse> {
+    console.log(BASE_URL);
     const resp = await fetch(`${this.baseUrl}${path}`, {
       method,
       headers: {

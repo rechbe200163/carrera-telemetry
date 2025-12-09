@@ -3,7 +3,7 @@
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { Championships } from '../types';
-import { cacheTag } from 'next/cache';
+import { cacheLife, cacheTag } from 'next/cache';
 import { CACHE_KEYS } from '../cache-keys';
 
 export async function getAllChampionships(): Promise<Championships[]> {
