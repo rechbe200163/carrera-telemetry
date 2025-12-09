@@ -1,8 +1,4 @@
-import { Session } from './../../api/src/sessions/entities/session.entity';
-import { Inter } from 'next/font/google';
-
-// enums
-export type Stauts = 'PLANNED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
+export type Status = 'PLANNED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
 export type SessionType = 'FUN' | 'PRACTICE' | 'QUALYFING' | 'RACE';
 
 // Models (field names kept like in your Prisma schema)
@@ -81,7 +77,7 @@ export interface Meetings {
   name?: string | null;
   start_date?: Date | null; // @db.Date
   end_date?: Date | null; // @db.Date
-  status: Stauts;
+  status: Status;
   created_at: Date;
   // relations
   championships?: Championships | null;
@@ -126,7 +122,7 @@ export interface Sessions {
   name: string;
   start_time?: Date | null;
   end_time?: Date | null;
-  status: Stauts;
+  status: Status;
   time_limit_seconds?: number | null;
   lap_limit?: number | null;
   created_at: Date;
@@ -138,12 +134,15 @@ export interface Sessions {
 }
 
 export interface LeaderBoard {
-  driver: Pick<Drivers, 'code' | 'color' | 'id'>;
+  driver: Pick<
+    Drivers,
+    'code' | 'color' | 'id' | 'first_name' | 'last_name' | 'created_at'
+  >;
   championship: Pick<DriverStandings, 'points_total' | 'wins' | 'podiums'> & {
     position: number;
   };
 }
 
-export interface SessionEntriesWithDrivers extends SessionEntries {
-  drivers: Pick<Drivers, 'code' | 'color' | 'last_name' | 'first_name'>;
-}
+// export interface SessionEntriesWithDrivers extends SessionEntries {
+//   drivers: Pick<Drivers, 'code' | 'color' | 'last_name' | 'first_name'>;
+// }

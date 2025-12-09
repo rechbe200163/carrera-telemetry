@@ -2,15 +2,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Calendar, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { sessionsApiService } from '@/lib/api/session-api.service';
-import { meetingsApiService } from '@/lib/api/meetings-api.service copy 2';
-import { championshipsApiService } from '@/lib/api/championship-api.service';
+import { getAllSessions } from '@/lib/api/session-api.service';
+import { getAllMeetings } from '@/lib/api/meetings-api.service';
+import { getAllChampionships } from '@/lib/api/championship-api.service';
 import { StatusBadge } from '@/components/status-badge';
 
 export default async function MeetingsPage() {
-  const sessions = await sessionsApiService.getAll();
-  const meetings = await meetingsApiService.getAll();
-  const championships = await championshipsApiService.getAll();
+  const sessions = await getAllSessions();
+  const meetings = await getAllMeetings();
+  const championships = await getAllChampionships();
 
   return (
     <div className='flex flex-col'>

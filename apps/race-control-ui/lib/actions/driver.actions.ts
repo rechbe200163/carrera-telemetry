@@ -3,6 +3,8 @@
 import { apiClient } from '@/lib/api-client';
 import { FormState } from '../fom.types';
 import { ENDPOINTS } from '@/lib/enpoints';
+import { CACHE_KEYS } from '../chach-keys';
+import { updateTag } from 'next/cache';
 
 export async function createDriverAction(
   _prevState: FormState,
@@ -16,6 +18,7 @@ export async function createDriverAction(
 
   console.log(JSON.stringify(payload, null, 2));
 
+  updateTag(CACHE_KEYS.drivers);
   return apiClient.safePost<any, typeof payload>('/drivers', payload);
 }
 
@@ -37,6 +40,7 @@ export async function updateDriverAction(
 
   console.log('PATCH PAYLOAD:', JSON.stringify(payload, null, 2));
 
+  updateTag(CACHE_KEYS.drivers);
   return apiClient.safePatch<any, typeof payload>(
     ENDPOINTS.DRIVERS.PATCH(id),
     payload
@@ -44,5 +48,6 @@ export async function updateDriverAction(
 }
 
 export async function deleteDriverActiob(id: number, _prevState: FormState) {
+  updateTag(CACHE_KEYS.drivers);
   return apiClient.safeDelete(ENDPOINTS.DRIVERS.DELETE(id));
 }

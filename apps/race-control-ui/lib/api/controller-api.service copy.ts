@@ -1,36 +1,41 @@
-// lib/api/driver-api.service.ts
+// lib/api/controller-api.service.ts
 'server-only';
 
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { Controllers } from '../types';
+import { cacheTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
-export class ControllersApiService {
-  private static instance: ControllersApiService;
+// ------------------------------------------------------
+//  GET ALL CONTROLLERS
+// ------------------------------------------------------
+export async function getAllControllers(): Promise<Controllers[]> {
+  'use cache';
+  cacheTag(CACHE_KEYS.controllers);
 
-  static getInstance(): ControllersApiService {
-    if (!this.instance) {
-      this.instance = new ControllersApiService();
-    }
-    return this.instance;
-  }
-
-  private constructor(private readonly baseClient = apiClient) {}
-
-  async getAll(): Promise<Controllers[]> {
-    return this.baseClient.get<Controllers[]>(ENDPOINTS.CONTROLLERS.GET);
-  }
-
-  async getById(id: number): Promise<Controllers> {
-    return this.baseClient.get<Controllers>(ENDPOINTS.CONTROLLERS.GET_ID(id));
-  }
-
-  // Optional: Suche
-  async search(query: string): Promise<Controllers[]> {
-    return this.baseClient.get<Controllers[]>(
-      `/drivers?query=${encodeURIComponent(query)}`
-    );
-  }
+  return apiClient.get<Controllers[]>(ENDPOINTS.CONTROLLERS.GET);
 }
 
-export const controllerApiService = ControllersApiService.getInstance();
+// ------------------------------------------------------
+//  GET CONTROLLER BY ID
+// ------------------------------------------------------
+export async function getControllerById(id: number): Promise<Controllers> {
+  'use cache';
+  cacheTag(CACHE_KEYS.controller(id));
+
+  return apiClient.get<Controllers>(ENDPOINTS.CONTROLLERS.GET_ID(id));
+}
+
+// ------------------------------------------------------
+//  SEARCH CONTROLLERS (Query)
+// ------------------------------------------------------
+export async function searchControllers(query: string): Promise<Controllers[]> {
+  'use cache';
+  cacheTag(`controller-search-${query}`);
+
+  // Falls du später einen richtigen Search-Endpoint baust, nur hier ändern.
+  return apiClient.get<Controllers[]>(
+    `/drivers?query=${encodeURIComponent(query)}`
+  );
+}

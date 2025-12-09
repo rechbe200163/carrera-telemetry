@@ -1,5 +1,7 @@
 'use server';
+import { updateTag } from 'next/cache';
 import { apiClient } from '../api-client';
+import { CACHE_KEYS } from '../chach-keys';
 import { ENDPOINTS } from '../enpoints';
 import { FormState } from '../fom.types';
 
@@ -17,6 +19,7 @@ export async function createMeetingsAction(
 
   console.log(payload);
 
+  updateTag(CACHE_KEYS.meetings);
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.MEETINGS.POST_GEN_NEXT_MEETING(championshipId),
     payload

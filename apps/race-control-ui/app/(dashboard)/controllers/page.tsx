@@ -2,10 +2,10 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import AddControllerForm from '@/components/forms/controllers/AddController';
 import ControllerTable from '@/components/tables/ControllerTable';
-import { controllerApiService } from '@/lib/api/controller-api.service copy';
+import { getAllControllers } from '@/lib/api/controller-api.service copy';
 
 export default async function ControllersPage() {
-  const controllers = await controllerApiService.getAll();
+  const controllers = await getAllControllers();
 
   const allAddresses = [1, 2, 3, 4, 5, 6];
   const usedAddresses = controllers.map((c) => c.address);

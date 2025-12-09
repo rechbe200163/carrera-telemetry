@@ -4,40 +4,49 @@
 import { apiClient } from '@/lib/api-client';
 import { Drivers } from '../types';
 import { ENDPOINTS } from '../enpoints';
+import { cacheTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
-export class DriverApiService {
-  private static instance: DriverApiService;
+// ------------------------------------------------------
+//  GET ALL DRIVERS
+// ------------------------------------------------------
+export async function getAllDrivers(): Promise<Drivers[]> {
+  'use cache';
+  cacheTag(CACHE_KEYS.drivers);
 
-  static getInstance(): DriverApiService {
-    if (!this.instance) {
-      this.instance = new DriverApiService();
-    }
-    return this.instance;
-  }
-
-  private constructor(private readonly baseClient = apiClient) {}
-
-  async getAll(): Promise<Drivers[]> {
-    return this.baseClient.get<Drivers[]>(ENDPOINTS.DRIVERS.GET);
-  }
-
-  async getById(id: number): Promise<Drivers> {
-    return this.baseClient.get<Drivers>(ENDPOINTS.DRIVERS.GET_ID(id));
-  }
-
-  async getByCode(code: string): Promise<Drivers> {
-    return this.baseClient.get<Drivers>('/drivers/by-code?code=' + code);
-    // oder:
-    // return this.baseClient.get<Drivers>('/drivers/by-code', { code });
-    // wenn du request+query erweitern willst
-  }
-
-  // Optional: Suche
-  async search(query: string): Promise<Drivers[]> {
-    return this.baseClient.get<Drivers[]>(
-      `/drivers?query=${encodeURIComponent(query)}`
-    );
-  }
+  return apiClient.get<Drivers[]>(ENDPOINTS.DRIVERS.GET);
 }
 
-export const driverApiService = DriverApiService.getInstance();
+// ------------------------------------------------------
+//  GET DRIVER BY ID
+// ------------------------------------------------------
+export async function getDriverById(id: number): Promise<Drivers> {
+  'use cache';
+  cacheTag(CACHE_KEYS.driver(id));
+
+  return apiClient.get<Drivers>(ENDPOINTS.DRIVERS.GET_ID(id));
+}
+
+// ------------------------------------------------------
+//  GET DRIVER BY CODE (e.g. VER, HAM, NOR)
+// ------------------------------------------------------
+export async function getDriverByCode(code: string): Promise<Drivers> {
+  'use cache';
+  cacheTag(`driver-code-${code}`);
+
+  return apiClient.get<Drivers>(
+    `/drivers/by-code?code=${encodeURIComponent(code)}`
+  );
+}
+
+// ------------------------------------------------------
+//  SEARCH DRIVERS
+// ------------------------------------------------------
+export async function searchDrivers(query: string): Promise<Drivers[]> {
+  'use cache';
+  cacheTag(`drivers-search-${query}`);
+
+  return apiClient.get<Drivers[]>(
+    `/drivers?query=${encodeURIComponent(query)}`
+  );
+}

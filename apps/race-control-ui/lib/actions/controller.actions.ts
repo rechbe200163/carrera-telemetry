@@ -2,6 +2,8 @@
 import { apiClient } from '@/lib/api-client';
 import { FormState } from '../fom.types';
 import { ENDPOINTS } from '@/lib/enpoints';
+import { updateTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
 export async function createControllerAction(
   _prevState: FormState,
@@ -16,6 +18,7 @@ export async function createControllerAction(
 
   console.log(JSON.stringify(payload, null, 2));
 
+  updateTag(CACHE_KEYS.controllers);
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.CONTROLLERS.POST,
     payload
@@ -43,6 +46,7 @@ export async function updateControllerAction(
 
   console.log('PATCH PAYLOAD:', JSON.stringify(payload, null, 2));
 
+  updateTag(CACHE_KEYS.controllers);
   return apiClient.safePatch<any, typeof payload>(
     ENDPOINTS.CONTROLLERS.PATCH(id),
     payload
@@ -53,5 +57,6 @@ export async function deleteControllerAction(
   id: number,
   _prevState: FormState
 ) {
+  updateTag(CACHE_KEYS.controllers);
   return apiClient.safeDelete(ENDPOINTS.CONTROLLERS.DELETE(id));
 }

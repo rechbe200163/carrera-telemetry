@@ -1,34 +1,42 @@
+// lib/api/sessions-api.service.ts
 'server-only';
 
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { Sessions } from '../types';
+import { cacheTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
-export class SessionsApiService {
-  private static instance: SessionsApiService;
+// ------------------------------------------------------
+//  GET ALL SESSIONS
+// ------------------------------------------------------
+export async function getAllSessions(): Promise<Sessions[]> {
+  'use cache';
+  cacheTag(CACHE_KEYS.sessions);
 
-  static getInstance(): SessionsApiService {
-    if (!this.instance) {
-      this.instance = new SessionsApiService();
-    }
-    return this.instance;
-  }
-
-  private constructor(private readonly baseClient = apiClient) {}
-
-  async getAll(): Promise<Sessions[]> {
-    return this.baseClient.get<Sessions[]>(ENDPOINTS.SESSIONS.GET);
-  }
-
-  async getById(id: number): Promise<Sessions> {
-    return this.baseClient.get<Sessions>(ENDPOINTS.SESSIONS.GET_ID(id));
-  }
-
-  async getByMeetingId(meetingId: number): Promise<Sessions[]> {
-    return this.baseClient.get<Sessions[]>(
-      ENDPOINTS.SESSIONS.GET_BY_MEETING_ID(meetingId)
-    );
-  }
+  return apiClient.get<Sessions[]>(ENDPOINTS.SESSIONS.GET);
 }
 
-export const sessionsApiService = SessionsApiService.getInstance();
+// ------------------------------------------------------
+//  GET SESSION BY ID
+// ------------------------------------------------------
+export async function getSessionById(id: number): Promise<Sessions> {
+  'use cache';
+  cacheTag(CACHE_KEYS.session(id));
+
+  return apiClient.get<Sessions>(ENDPOINTS.SESSIONS.GET_ID(id));
+}
+
+// ------------------------------------------------------
+//  GET SESSIONS BY MEETING ID
+// ------------------------------------------------------
+export async function getSessionsByMeetingId(
+  meetingId: number
+): Promise<Sessions[]> {
+  'use cache';
+  cacheTag(CACHE_KEYS.sessionsByMeeting(meetingId));
+
+  return apiClient.get<Sessions[]>(
+    ENDPOINTS.SESSIONS.GET_BY_MEETING_ID(meetingId)
+  );
+}

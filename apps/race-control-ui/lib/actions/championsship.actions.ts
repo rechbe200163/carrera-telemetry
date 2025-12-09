@@ -2,6 +2,8 @@
 import { apiClient } from '@/lib/api-client';
 import { FormState } from '../fom.types';
 import { ENDPOINTS } from '@/lib/enpoints';
+import { revalidateTag, updateTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
 export async function createChampionshipAction(
   _prevState: FormState,
@@ -15,6 +17,7 @@ export async function createChampionshipAction(
 
   console.log(JSON.stringify(payload, null, 2));
 
+  updateTag(CACHE_KEYS.championships);
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.CHAMPIONSHIPS.POST,
     payload
@@ -37,6 +40,7 @@ export async function updateChampionshipAction(
   const planned_meetings = formData.get('plannedMeetings');
   if (planned_meetings) payload.planned_meetings = String(planned_meetings);
 
+  updateTag(CACHE_KEYS.championships);
   return apiClient.safePatch<any, typeof payload>(
     ENDPOINTS.CHAMPIONSHIPS.PATCH(id),
     payload
@@ -47,5 +51,6 @@ export async function deleteChampionshipAction(
   id: number,
   _prevState: FormState
 ): Promise<FormState> {
+  updateTag(CACHE_KEYS.championships);
   return apiClient.safeDelete(ENDPOINTS.CHAMPIONSHIPS.DELETE(id));
 }

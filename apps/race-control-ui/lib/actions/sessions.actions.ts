@@ -1,8 +1,10 @@
 'use server';
+import { updateTag } from 'next/cache';
 import { apiClient } from '../api-client';
 import { ENDPOINTS } from '../enpoints';
 import { FormState } from '../fom.types';
 import { SessionType } from '../types';
+import { CACHE_KEYS } from '../chach-keys';
 
 export async function startSessionAction(
   sessionId: number,
@@ -40,6 +42,7 @@ export async function startSessionAction(
     payload,
   });
 
+  updateTag(CACHE_KEYS.session(sessionId));
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.SESSIONS.START(sessionId),
     payload

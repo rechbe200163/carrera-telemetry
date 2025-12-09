@@ -1,9 +1,9 @@
 import Adddriver from '@/components/forms/drivers/AddDriver';
-import { driverApiService } from '@/lib/api/driver-api.service';
+import { getAllDrivers } from '@/lib/api/driver-api.service';
 import DriverTable from '@/components/tables/DriverTable';
 
 export default async function DriversPage() {
-  const drivers = await driverApiService.getAll();
+  const drivers = await getAllDrivers();
   return (
     <div className='p-6 space-y-6'>
       {/* Page Header */}

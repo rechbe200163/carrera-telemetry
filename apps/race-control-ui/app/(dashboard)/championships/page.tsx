@@ -1,11 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { championshipsApiService } from '@/lib/api/championship-api.service';
 import ChampionsshipGrid from '@/components/tables/ChampionsshipGrid';
 import AddChampionShipForm from '@/components/forms/championship/AddChampionship';
+import { getAllChampionships } from '@/lib/api/championship-api.service';
 
 export default async function ChampionshipsPage() {
-  const championships = await championshipsApiService.getAll();
+  const championships = await getAllChampionships();
   return (
     <div className='flex flex-col'>
       <div className='p-6 space-y-6'>

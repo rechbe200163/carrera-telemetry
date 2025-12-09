@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowRight, Calendar } from 'lucide-react';
+import { ArrowRight, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import { driverStandingsApiService } from '@/lib/api/driverstandings-api.service';
+import { getDriverStandingsByChampionship } from '@/lib/api/driverstandings-api.service';
 import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
-import { meetingsApiService } from '@/lib/api/meetings-api.service copy 2';
-import { championshipsApiService } from '@/lib/api/championship-api.service';
 import AddMeetingsForm from '@/components/forms/meetings/AddMeeting';
+import { getChampionshipById } from '@/lib/api/championship-api.service';
+import { getMeetingsByChampionshipId } from '@/lib/api/meetings-api.service';
 
 export default async function ChampionshipDetailPage({
   params,
@@ -15,10 +15,9 @@ export default async function ChampionshipDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const championship = await championshipsApiService.getById(Number(id));
-  const meetings = await meetingsApiService.getAllByChampionsshipId(Number(id));
-  const driverStandings =
-    await driverStandingsApiService.getStandingsByChampionship(Number(id));
+  const championship = await getChampionshipById(Number(id));
+  const meetings = await getMeetingsByChampionshipId(Number(id));
+  const driverStandings = await getDriverStandingsByChampionship(Number(id));
 
   console.log();
 

@@ -3,34 +3,27 @@
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { Championships } from '../types';
+import { cacheTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
-export class ChampionShipApiService {
-  private static instance: ChampionShipApiService;
-
-  static getInstance(): ChampionShipApiService {
-    if (!this.instance) {
-      this.instance = new ChampionShipApiService();
-    }
-    return this.instance;
-  }
-
-  private constructor(private readonly baseClient = apiClient) {}
-
-  async getAll(): Promise<Championships[]> {
-    return this.baseClient.get<Championships[]>(ENDPOINTS.CHAMPIONSHIPS.GET);
-  }
-
-  async getById(id: number): Promise<Championships> {
-    return this.baseClient.get<Championships>(
-      ENDPOINTS.CHAMPIONSHIPS.GET_ID(id)
-    );
-  }
-
-  async getByMeetingId(meetingId: number) {
-    return this.baseClient.get<Championships>(
-      ENDPOINTS.CHAMPIONSHIPS.MEETING_ID(meetingId)
-    );
-  }
+export async function getAllChampionships(): Promise<Championships[]> {
+  'use cache';
+  cacheTag(CACHE_KEYS.championships);
+  return apiClient.get<Championships[]>(ENDPOINTS.CHAMPIONSHIPS.GET);
 }
 
-export const championshipsApiService = ChampionShipApiService.getInstance();
+export async function getChampionshipById(id: number): Promise<Championships> {
+  'use cache';
+  cacheTag(CACHE_KEYS.championship(id));
+  return apiClient.get<Championships>(ENDPOINTS.CHAMPIONSHIPS.GET_ID(id));
+}
+
+export async function getChampionshipByMeetingId(
+  meetingId: number
+): Promise<Championships> {
+  'use cache';
+  cacheTag(CACHE_KEYS.championshipMeeting(meetingId));
+  return apiClient.get<Championships>(
+    ENDPOINTS.CHAMPIONSHIPS.MEETING_ID(meetingId)
+  );
+}

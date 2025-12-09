@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Clock, RotateCcw, Eye, Waypoints } from 'lucide-react';
 import Link from 'next/link';
-import { meetingsApiService } from '@/lib/api/meetings-api.service copy 2';
+import { getMeetingById } from '@/lib/api/meetings-api.service';
 import { StatusBadge } from '@/components/status-badge';
-import { championshipsApiService } from '@/lib/api/championship-api.service';
-import { sessionsApiService } from '@/lib/api/session-api.service';
+import { getChampionshipByMeetingId } from '@/lib/api/championship-api.service';
+import { getSessionsByMeetingId } from '@/lib/api/session-api.service';
 import { SessionTypeBadge } from '@/components/session-type-badge';
 import { SessionType } from '@/lib/types';
 
@@ -15,9 +15,9 @@ export default async function MeetingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const meeting = await meetingsApiService.getById(Number(id));
-  const championship = await championshipsApiService.getByMeetingId(Number(id));
-  const sessions = await sessionsApiService.getByMeetingId(Number(id));
+  const meeting = await getMeetingById(Number(id));
+  const championship = await getChampionshipByMeetingId(Number(id));
+  const sessions = await getSessionsByMeetingId(Number(id));
 
   console.log('sessions', sessions);
 

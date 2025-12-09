@@ -1,5 +1,7 @@
 'use server';
+import { updateTag } from 'next/cache';
 import { apiClient } from '../api-client';
+import { CACHE_KEYS } from '../chach-keys';
 import { ENDPOINTS } from '../enpoints';
 import { FormState } from '../fom.types';
 
@@ -23,6 +25,7 @@ export async function createSessionEntriesAction(
   // Optional: minimal Logging
   console.log('[SessionEntries] payload', payload);
 
+  updateTag(CACHE_KEYS.sessionEntries);
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.SESSION_ENTRIES.POST(sessionId),
     payload

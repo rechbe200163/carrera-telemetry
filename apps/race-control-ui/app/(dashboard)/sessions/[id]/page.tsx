@@ -2,20 +2,20 @@ import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Circle, RotateCcw, Clock, Square, Zap } from 'lucide-react';
+import { ArrowLeft, Circle, Square, Zap } from 'lucide-react';
 import { SessionTypeBadge } from '@/components/session-type-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
-import { sessionsApiService } from '@/lib/api/session-api.service';
-import { meetingsApiService } from '@/lib/api/meetings-api.service copy 2';
-import { championshipsApiService } from '@/lib/api/championship-api.service';
-import { sessionsEntriesApiService } from '@/lib/api/session-entries-api.service';
+import { getSessionById } from '@/lib/api/session-api.service';
+import { getMeetingById } from '@/lib/api/meetings-api.service';
+import { getSessionEntriesBySessionId } from '@/lib/api/session-entries-api.service';
 import { StartSessionForm } from '@/components/forms/sessions/start-session-form';
 import { AddSessionEntryForm } from '@/components/forms/session-entries/AddSessionEntries';
-import { driverApiService } from '@/lib/api/driver-api.service';
-import { controllerApiService } from '@/lib/api/controller-api.service copy';
+import { getAllDrivers } from '@/lib/api/driver-api.service';
+import { getAllControllers } from '@/lib/api/controller-api.service copy';
 import { RaceSessionStatus } from '@/components/race-session-status';
 import { TimedSessionCountdown } from '@/components/timed-session-countdown';
+import { getChampionshipById } from '@/lib/api/championship-api.service';
 
 export default async function SessionDetailPage({
   params,
@@ -24,16 +24,16 @@ export default async function SessionDetailPage({
 }) {
   const { id } = await params;
 
-  const session = await sessionsApiService.getById(Number(id));
+  const session = await getSessionById(Number(id));
   console.log(session);
   const meetingId = session.meeting_id;
-  const meeting = await meetingsApiService.getById(meetingId);
+  const meeting = await getMeetingById(meetingId);
   const championshipId = meeting.championship_id;
   if (!championshipId) return;
-  const championship = await championshipsApiService.getById(championshipId);
+  const championship = await getChampionshipById(championshipId);
 
-  const drivers = await driverApiService.getAll();
-  const controllers = await controllerApiService.getAll();
+  const drivers = await getAllDrivers();
+  const controllers = await getAllControllers();
 
   if (!session) {
     return (
@@ -59,9 +59,7 @@ export default async function SessionDetailPage({
   }
 
   // Session Entries für diese Session
-  const sessionEntries = await sessionsEntriesApiService.getBySessionId(
-    session.id
-  );
+  const sessionEntries = await getSessionEntriesBySessionId(session.id);
   console.log(sessionEntries);
 
   const hasEntries = sessionEntries.length > 0;

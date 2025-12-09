@@ -1,7 +1,9 @@
 import { FormState } from './fom.types';
 
-// lib/api-client.ts
-const BASE_URL = process.env.API_URL ?? 'http://localhost:3333';
+const BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? process.env.API_URL_PROD || ''
+    : process.env.API_URL || 'http://localhost:3333';
 
 export class ApiError extends Error {
   constructor(

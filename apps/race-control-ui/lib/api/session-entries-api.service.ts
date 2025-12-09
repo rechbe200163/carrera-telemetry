@@ -1,30 +1,22 @@
+// lib/api/session-entries-api.service.ts
 'server-only';
 
 import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
-import { SessionEntries, Sessions } from '../types';
+import { SessionEntries } from '../types';
+import { cacheTag } from 'next/cache';
+import { CACHE_KEYS } from '../chach-keys';
 
-export class SessionsEntriesApiService {
-  private static instance: SessionsEntriesApiService;
+// ------------------------------------------------------
+//  GET SESSION ENTRIES BY SESSION ID
+// ------------------------------------------------------
+export async function getSessionEntriesBySessionId(
+  sessionId: number
+): Promise<SessionEntries[]> {
+  'use cache';
+  cacheTag(CACHE_KEYS.sessionEntriesBySession(sessionId));
 
-  static getInstance(): SessionsEntriesApiService {
-    if (!this.instance) {
-      this.instance = new SessionsEntriesApiService();
-    }
-    return this.instance;
-  }
-
-  private constructor(private readonly baseClient = apiClient) {}
-
-  async getBySessionId(sessionId: number): Promise<SessionEntries[]> {
-    console.log(ENDPOINTS.SESSION_ENTRIES.GET_BY_SESSION_ID(sessionId));
-    const data = await this.baseClient.get<SessionEntries[]>(
-      ENDPOINTS.SESSION_ENTRIES.GET_BY_SESSION_ID(sessionId)
-    );
-    console.log(data);
-    return data;
-  }
+  return apiClient.get<SessionEntries[]>(
+    ENDPOINTS.SESSION_ENTRIES.GET_BY_SESSION_ID(sessionId)
+  );
 }
-
-export const sessionsEntriesApiService =
-  SessionsEntriesApiService.getInstance();
