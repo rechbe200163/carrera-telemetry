@@ -1,12 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalEnv": ["API_URL", "API_URL_PROD", "NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["API_URL", "API_URL_PROD", "NODE_ENV"]
     },
     "lint": {
       "dependsOn": ["^lint"]
