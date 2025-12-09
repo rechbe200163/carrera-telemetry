@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import DynamicBreadcrumbs from './dynamic-breadcrumps';
+import { Suspense } from 'react';
 
 export function SiteHeader() {
   return (
@@ -13,7 +13,9 @@ export function SiteHeader() {
           className='mx-2 data-[orientation=vertical]:h-4'
         />
         <h1 className='text-base font-medium'>Dashboard</h1>
-        <DynamicBreadcrumbs />
+        <Suspense fallback={<div>Loading...</div>}>
+          <DynamicBreadcrumbs />
+        </Suspense>
       </div>
     </header>
   );
