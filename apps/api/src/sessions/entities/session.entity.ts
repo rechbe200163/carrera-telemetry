@@ -18,5 +18,5 @@ export class Session {
   laps?: Lap[];
   session_entries?: SessionEntry[];
   session_result?: SessionResult[];
-  meetings?: Meetings;
+  meetings?: Meetings[];
 }
