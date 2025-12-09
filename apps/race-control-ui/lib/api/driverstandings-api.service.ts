@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { DriverStandings, LeaderBoard } from '../types';
 import { cacheTag } from 'next/cache';
-import { CACHE_KEYS } from '../chach-keys';
+import { CACHE_KEYS } from '../cache-keys';
 
 // ------------------------------------------------------
 //  GET STANDINGS BY CHAMPIONSHIP

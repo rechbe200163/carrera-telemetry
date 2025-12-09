@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { Meetings } from '../types';
 import { cacheTag } from 'next/cache';
-import { CACHE_KEYS } from '../chach-keys';
+import { CACHE_KEYS } from '../cache-keys';
 
 // ------------------------------------------------------
 //  GET ALL MEETINGS OF A CHAMPIONSHIP

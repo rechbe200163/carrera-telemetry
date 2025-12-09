@@ -3,7 +3,7 @@ import { apiClient } from '@/lib/api-client';
 import { FormState } from '../fom.types';
 import { ENDPOINTS } from '@/lib/enpoints';
 import { revalidateTag, updateTag } from 'next/cache';
-import { CACHE_KEYS } from '../chach-keys';
+import { CACHE_KEYS } from '../cache-keys';
 
 export async function createChampionshipAction(
   _prevState: FormState,
