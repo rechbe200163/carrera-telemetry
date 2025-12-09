@@ -155,6 +155,7 @@ model session_results {
   best_lap_ms        Int?
   avg_lap_ms         Int?
   laps_completed     Int      @default(0)
+  total_time_ms      Int
   points_base        Int      @default(0)
   points_fastest_lap Int      @default(0)
   points_total       Int      @default(0)
