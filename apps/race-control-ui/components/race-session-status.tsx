@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { RotateCcw, Waypoints } from 'lucide-react';
+import { ENDPOINTS } from '@/lib/enpoints';
 
 type RaceSessionStatusProps = {
   lapLimit: number | null;
+  sessionId: number;
   sseUrl?: string; // optional override, sonst Default
 };
 
 export function RaceSessionStatus({
   lapLimit,
-  sseUrl = 'http://localhost:3333/laps/sse',
+  sessionId,
 }: RaceSessionStatusProps) {
+  const sseUrl = ENDPOINTS.LAPS.LIVE_LAPS(sessionId);
   const [currentLap, setCurrentLap] = useState<number | null>(null);
   const [connected, setConnected] = useState(false);
 

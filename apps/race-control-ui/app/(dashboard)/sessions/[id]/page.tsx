@@ -116,8 +116,7 @@ export default async function SessionDetailPage({
                     {session.session_type === 'RACE' ? (
                       <RaceSessionStatus
                         lapLimit={session.lap_limit!}
-                        // optional: wenn du pro Session einen eigenen SSE-Endpoint hast:
-                        // sseUrl={`http://localhost:3333/laps/sse?sessionId=${session.id}`}
+                        sessionId={session.id}
                       />
                     ) : (
                       <TimedSessionCountdown

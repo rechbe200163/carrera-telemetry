@@ -59,6 +59,15 @@ export const ENDPOINTS = {
     DELETE: (id: number) => `/races/${id}`,
   },
 
+  LAPS: {
+    POST: '/laps',
+    GET: '/laps',
+    GET_ID: (id: number) => `/laps/${id}`,
+    PATCH: (id: number) => `/laps/${id}`,
+    DELETE: (id: number) => `/laps/${id}`,
+    LIVE_LAPS: (sessionId: number) => `/laps/${sessionId}/stream`,
+  },
+
   // --- Race Events ---
   RACE_EVENTS: {
     POST: '/race-events',
