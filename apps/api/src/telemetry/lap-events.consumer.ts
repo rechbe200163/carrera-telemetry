@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { LapsRepo } from 'src/laps/laps.repo';
 import { MqttService } from 'src/mqtt/mqtt.service';
+import { SessionRuntimeService } from 'src/sessions/session-runtime.service';
 import { SessionsRepo } from 'src/sessions/sessions.repo';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class LapEventsConsumer implements OnModuleInit {
     private readonly mqtt: MqttService,
     private readonly sessionsRepo: SessionsRepo,
     private readonly lapsRepo: LapsRepo,
+    private readonly sessionRuntime: SessionRuntimeService,
   ) {}
 
   onModuleInit() {
@@ -20,13 +22,18 @@ export class LapEventsConsumer implements OnModuleInit {
       this.handleLapEvent(payload).catch(console.error);
     });
 
-    // 2) Session-Start/End-Events vom Backend
-    this.mqtt.subscribe('race_control/sessions/active', (payload) => {
-      this.handleSessionActiveEvent(payload).catch(console.error);
+    // 2) Session-Start-Events
+    this.mqtt.subscribe('race_control/sessions/start', (payload) => {
+      this.handleSessionStartEvent(payload).catch(console.error);
+    });
+
+    // 3) Session-Stop-Events
+    this.mqtt.subscribe('race_control/sessions/stop', (payload) => {
+      this.handleSessionStopEvent(payload).catch(console.error);
     });
   }
 
-  private async handleSessionActiveEvent(payload: any) {
+  private async handleSessionStartEvent(payload: any) {
     const sessionId = payload.sessionId as number | null;
 
     if (!sessionId) {
@@ -43,6 +50,15 @@ export class LapEventsConsumer implements OnModuleInit {
 
     for (const e of session.session_entries) {
       this.controllerMap.set(e.controller_address, e.driver_id);
+    }
+  }
+
+  private async handleSessionStopEvent(payload: any) {
+    const sessionId = payload.sessionId as number | null;
+    // Du könntest hier checken, ob es dieselbe aktive Session ist
+    if (this.activeSessionId === sessionId) {
+      this.activeSessionId = null;
+      this.controllerMap.clear();
     }
   }
 
@@ -64,5 +80,9 @@ export class LapEventsConsumer implements OnModuleInit {
       is_pit_out_lap: false,
       is_valid: true,
     });
+    await this.sessionRuntime.onLapPersisted(
+      this.activeSessionId,
+      payload.lapNumber,
+    );
   }
 }

@@ -4,8 +4,9 @@ export class CreateSessionResultDto {
   position!: number;
   best_lap_ms?: number | null;
   avg_lap_ms?: number | null;
-  laps_completed?: number; // default 0 in DB
-  points_base?: number; // default 0
-  points_fastest_lap?: number; // default 0
-  points_total?: number; // default 0
+  total_time_ms: number;
+  laps_completed?: number;
+  points_base?: number;
+  points_fastest_lap?: number;
+  points_total?: number;
 }

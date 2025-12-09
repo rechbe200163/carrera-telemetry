@@ -11,25 +11,15 @@ export class SessionResultsRepo {
     return this.prisma.session_results.create({ data });
   }
 
-  async upsertForSessionAndDriver(
-    sessionId: number,
-    driverId: number,
-    data: Omit<CreateSessionResultDto, 'session_id' | 'driver_id'>,
-  ): Promise<SessionResult> {
-    return this.prisma.session_results.upsert({
-      where: {
-        // nutzt dein UNIQUE (session_id, driver_id)
-        session_id_driver_id: { session_id: sessionId, driver_id: driverId },
-      },
-      create: {
-        session_id: sessionId,
-        driver_id: driverId,
-        ...data,
-      },
-      update: {
-        ...data,
-      },
+  async createSessionResultsForSessionAndDriver(
+    data: CreateSessionResultDto[],
+  ) {
+    const res = await this.prisma.session_results.createMany({
+      data,
     });
+    if (!res) {
+      throw new Error('a error occurd');
+    }
   }
 
   async findBySession(sessionId: number): Promise<SessionResult[]> {

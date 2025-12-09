@@ -7,12 +7,14 @@ import {
 } from '@nestjs/common';
 import { SessionsRepo } from './sessions.repo';
 import { StartSessionDto } from './dto/start-session.dto';
+import { SessionRuntimeService } from './session-runtime.service';
 
 @Injectable()
 export class SessionsService {
   constructor(
     private readonly sessionsRepo: SessionsRepo,
     private readonly mqttService: MqttService,
+    private readonly sessionRuntimeService: SessionRuntimeService,
   ) {}
 
   async startSession(sessionId: number, dto: StartSessionDto) {
@@ -34,13 +36,7 @@ export class SessionsService {
         });
 
         const seconds = dto.durationMinutes * 60;
-        await this.mqttService.publish('race_control/sessions/start', {
-          sessionId,
-          mode: 'TIME',
-          timeLimitSeconds: seconds,
-          lapLimit: null,
-          sessionType: session.session_type,
-        });
+        this.sessionRuntimeService.onSessionStart(sessionId);
         break;
       case 'RACE':
         if (!dto.lapLimit) {
@@ -52,13 +48,7 @@ export class SessionsService {
           lap_limit: dto.lapLimit,
         });
 
-        await this.mqttService.publish('race_control/sessions/start', {
-          sessionId,
-          mode: 'LAPS',
-          timeLimitSeconds: null,
-          lapLimit: dto.lapLimit,
-          sessionType: session.session_type,
-        });
+        this.sessionRuntimeService.onSessionStart(sessionId);
         break;
       case 'FUN':
         throw new NotImplementedException(
