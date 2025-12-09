@@ -3,10 +3,10 @@ import { LapsService } from './laps.service';
 import { LapsController } from './laps.controller';
 import { LapsRepo } from './laps.repo';
 import { PrismaService } from 'src/prisma.service';
-import { MqttService } from 'src/mqtt/mqtt.service';
+import { MqttModule } from 'src/mqtt/mqtt.module';
 
 @Module({
-  imports: [MqttService],
+  imports: [MqttModule],
   controllers: [LapsController],
   providers: [LapsService, LapsRepo, PrismaService],
   exports: [LapsRepo],
