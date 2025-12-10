@@ -25,9 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run API tests
+      - name: Run API tests with coverage + threshold
         working-directory: apps/api
-        run: npm test
+        run: npm run test:cov
 
       - name: Upload coverage report
         if: success()
