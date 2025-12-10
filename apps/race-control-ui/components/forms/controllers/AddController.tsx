@@ -71,14 +71,14 @@ const AddControllerForm = ({
               )}
             </div>
             <div className='space-y-2'>
-              <Label> Kontroller Addresse (0-5)</Label>
+              <Label> Kontroller Addresse (1-6)</Label>
               <NativeSelect name='controllerAddress'>
                 <NativeSelectOption>
-                  Kontroller Addresse (0-5)
+                  Kontroller Addresse (1-6)
                 </NativeSelectOption>
                 {availableAddresses.map((addr) => (
                   <NativeSelectOption key={addr} value={String(addr)}>
-                    Addresse {addr}
+                    Addresse {addr + 1}
                   </NativeSelectOption>
                 ))}
               </NativeSelect>

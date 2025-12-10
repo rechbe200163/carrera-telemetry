@@ -89,7 +89,7 @@ function ControllerTable({
                     </TableCell>
                     <TableCell>
                       <span className='inline-flex items-center gap-2 rounded-md bg-secondary px-2 py-1 font-mono text-sm font-medium'>
-                        Addr {controller.address}
+                        Addr {controller.address + 1}
                       </span>
                     </TableCell>
                     <TableCell>

@@ -7,7 +7,7 @@ import { getAllControllers } from '@/lib/api/controller-api.service copy';
 export default async function ControllersPage() {
   const controllers = await getAllControllers();
 
-  const allAddresses = [1, 2, 3, 4, 5, 6];
+  const allAddresses = [0, 1, 2, 3, 4, 5];
   const usedAddresses = controllers.map((c) => c.address);
   const availableAddresses = allAddresses.filter(
     (addr) => !usedAddresses.includes(addr)
