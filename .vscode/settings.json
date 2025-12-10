@@ -1,3 +1,8 @@
 {
-  "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css"
+  "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css", // Jest nur für bestimmte Ordner im Monorepo aktivieren
+  "jest.rootPath": "apps/api",
+  // So startet die Extension Jest – genau wie du im Terminal
+  "jest.jestCommandLine": "npm test --",
+  "jest.runMode": "watch",
+  "jest.enable": true
 }
