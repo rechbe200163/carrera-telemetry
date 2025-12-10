@@ -100,7 +100,13 @@ const AddChampionshipForm = () => {
           )}
 
           <DialogFooter>
-            <Button variant='outline' onClick={() => setIsAddOpen(false)}>
+            <Button
+              variant='outline'
+              type='button'
+              onClick={(e) => {
+                (e.preventDefault(), setIsAddOpen(false));
+              }}
+            >
               Abbrechen
             </Button>
             <Button type='submit' disabled={isPending}>
