@@ -102,7 +102,7 @@ const AddControllerForm = ({
                  hover:bg-muted data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary'
                   >
                     <Radio value={c.key} className='hidden' />
-                    <Gamepad2 className={`h-6 w-6 red`} />
+                    <Gamepad2 className={`h-6 w-6 ${c.color}`} />
                   </Label>
                 ))}
               </RadioGroup>
