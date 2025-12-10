@@ -3,20 +3,15 @@ name: Test & Deploy API via Coolify
 on:
   push:
     branches:
-      - master # oder dein Deploy-Branch
+      - main
     paths:
       - 'apps/api/**'
       - 'package.json'
-      - 'pnpm-lock.yaml'
       - 'turbo.json'
 
 jobs:
   test-and-deploy-api:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Checkout repo
@@ -25,25 +20,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22.14.0' # zu deinem Projekt passend
-          cache: 'pnpm'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
+          node-version: '22'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm install
 
       - name: Run API tests
         working-directory: apps/api
-        run: pnpm test
+        run: npm test
 
       - name: Trigger Coolify deploy (API)
         if: success()
-        run: |
-          curl -X POST "$COOLIFY_WEBHOOK_URL"
+        run: curl -X POST "$COOLIFY_WEBHOOK_URL"
         env:
           COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
