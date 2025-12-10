@@ -80,6 +80,9 @@ export class LapEventsConsumer implements OnModuleInit {
       is_pit_out_lap: false,
       is_valid: true,
     });
+
+    console.log('payload', payload);
+
     await this.sessionRuntime.onLapPersisted(
       this.activeSessionId,
       payload.lapNumber,
