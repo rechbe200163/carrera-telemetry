@@ -3,7 +3,7 @@ name: Test & Deploy API via Coolify
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'apps/api/**'
       - 'package.json'
