@@ -16,6 +16,6 @@ import { SessionResultModule } from 'src/session-result/session-result.module';
     SessionRuntimeService,
     PrismaService,
   ],
-  exports: [SessionsRepo],
+  exports: [SessionsRepo, SessionRuntimeService],
 })
 export class SessionsModule {}
