@@ -111,7 +111,7 @@ export interface SessionResults {
   points_total: number;
   created_at: Date;
   // relations
-  drivers?: Drivers;
+  drivers?: Pick<Drivers, 'code' | 'color' | 'first_name' | 'last_name'>;
   sessions?: Sessions;
 }
 

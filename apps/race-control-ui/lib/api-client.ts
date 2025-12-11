@@ -1,9 +1,6 @@
 import { FormState } from './fom.types';
 
-const BASE_URL =
-  process.env.NODE_ENV === 'production'
-    ? process.env.API_URL_PROD
-    : process.env.API_URL;
+const BASE_URL = 'https://carrera-api.mrhost.uk';
 
 export class ApiError extends Error {
   constructor(

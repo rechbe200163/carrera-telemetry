@@ -2,7 +2,7 @@ import { Drivers } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 interface DriverBadgeProps {
-  driver: Drivers;
+  driver: Pick<Drivers, 'code' | 'color' | 'first_name' | 'last_name'>;
   showName?: boolean;
   size?: 'sm' | 'default' | 'lg';
 }
@@ -12,6 +12,7 @@ export function DriverBadge({
   showName = false,
   size = 'default',
 }: DriverBadgeProps) {
+  console.log(driver);
   return (
     <div className='flex items-center gap-2'>
       <div

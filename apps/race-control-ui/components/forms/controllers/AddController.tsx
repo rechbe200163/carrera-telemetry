@@ -15,17 +15,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '../../ui/button';
 import { Gamepad2, Plus } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../ui/select';
 import { createControllerAction } from '@/lib/actions/controller.actions';
 import { NativeSelect, NativeSelectOption } from '../../ui/native-select';
-import { Radio, RadioGroup, RadioGroupItem } from '../../ui/radio-group';
-import { controllerColors, controllerIcons } from '@/lib/utils';
+import { Radio, RadioGroup } from '../../ui/radio-group';
+import { controllerColors } from '@/lib/utils';
 
 const AddControllerForm = ({
   availableAddresses,
@@ -91,7 +84,7 @@ const AddControllerForm = ({
             <div className='space-y-2'>
               <Label>Visueller Marker</Label>
               <RadioGroup
-                name='iconColor'
+                name='icon'
                 className='grid grid-cols-4 gap-2'
                 defaultValue='blue'
               >
@@ -101,7 +94,7 @@ const AddControllerForm = ({
                     className='flex items-center justify-center p-2 border rounded-lg cursor-pointer 
                  hover:bg-muted data-[state=checked]:bg-primary/10 data-[state=checked]:border-primary'
                   >
-                    <Radio value={c.key} className='hidden' />
+                    <Radio value={c.key} className={``} />
                     <Gamepad2 className={`h-6 w-6 ${c.color}`} />
                   </Label>
                 ))}
