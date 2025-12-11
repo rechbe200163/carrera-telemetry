@@ -86,9 +86,9 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
 
   // Live-Daten via SSE holen
   useEffect(() => {
-    const baseUrl = process.env.API_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!baseUrl) {
-      console.error('API_URL is not set');
+      console.error('NEXT_PUBLIC_API_URL is not set');
       return;
     }
 
