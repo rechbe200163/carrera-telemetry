@@ -20,10 +20,10 @@ logging.basicConfig(
 CU_DEVICE = "076123CC-BB75-6373-50E9-32C05B25B413"
 
 
-MQTT_USERNAME = ""
-MQTT_PASSWORD=""
-MQTT_HOST=""
-MQTT_PORT=0
+MQTT_HOST = "10.0.0.166"
+MQTT_PORT = 1883
+MQTT_USERNAME = "o3FdplPaEdlZlThL"
+MQTT_PASSWORD = "KfoY9i3XEx94Ni7yo2TD825U7kiSCvut"
 # Nur Lap-Events – genau EIN Topic mit Runde + Sektorzeiten
 TOPIC_LAP = "carrera/cu/lapTimes"
 
@@ -178,86 +178,127 @@ class CarreraMqttBridge:
     # ---------------------------------------------------------------------
 
     def handle_timer_event(self, t: ControlUnit.Timer):
-        """
-        t.address:  0..7 (Controller-Adresse)
-        t.timestamp: CU-Zeit in ms
-        t.sector:   1 = Start/Ziel, 2 = Check-Lane (Annahme: 2 Sektoren)
-        """
-        addr = t.address
-        # IGNORE Pace Car (7) & Ghost Car (6)
-        if addr >= 6:
-            return
+            """
+            t.address:  0..7 (Controller-Adresse)
+            t.timestamp: CU-Zeit in ms
+            t.sector:   1 = Start/Ziel, 2 = Check-Lane (Annahme: 2 Sektoren)
+            """
+            addr = t.address
+            # IGNORE Pace Car (7) & Ghost Car (6)
+            if addr >= 6:
+                return
 
-        sector = t.sector
-        cu_ts = t.timestamp
-        wall_ts = int(time.time() * 1000)
+            sector = t.sector
+            cu_ts = t.timestamp
+            wall_ts = int(time.time() * 1000)
 
-        # Init-State für diese Adresse
-        if addr not in self.last_s1_ts:
-            self.last_s1_ts[addr] = None
-            self.last_s2_ts[addr] = None
-            self.lap_counter[addr] = 0
+            # Init-State für diese Adresse
+            if addr not in self.last_s1_ts:
+                self.last_s1_ts[addr] = None
+                self.last_s2_ts[addr] = None
+                self.lap_counter[addr] = 0
 
-        # --------------------- Sector 2: Mitte der Runde -------------------
-        if sector == 2:
-            self.last_s2_ts[addr] = cu_ts
-            logging.debug(f"addr={addr} hit S2 at {cu_ts}ms")
-            return
+            # --------------------- Sector 2: Mitte der Runde -------------------
+            if sector == 2:
+                prev_s1 = self.last_s1_ts[addr]
 
-        # --------------------- Sector 1: Start/Ziel ------------------------
-        if sector == 1:
-            prev_s1 = self.last_s1_ts[addr]
-            prev_s2 = self.last_s2_ts[addr]
+                # Nur wenn wir schon einmal über S1 gefahren sind,
+                # können wir einen Sektor-1-Wert berechnen
+                if (
+                    self.current_session_id is not None
+                    and prev_s1 is not None
+                    and cu_ts > prev_s1
+                ):
+                    # Aktuelle Runde ist immer "fertige Runden + 1"
+                    lap_nr = self.lap_counter[addr] + 1
+                    s1_time = cu_ts - prev_s1
 
-            logging.info(f"s1={prev_s1}, s2={prev_s2}"),
+                    payload_s1 = {
+                        "eventType": "sector",
+                        "sessionId": self.current_session_id,
+                        "controllerAddress": addr,
+                        "lapNumber": lap_nr,
+                        "sectorNumber": 1,
+                        "sectorTimeMs": s1_time,
+                        "cuTimestampMs": cu_ts,
+                        "wallClockTs": wall_ts,
+                    }
+                    logging.info(f"SECTOR1: {payload_s1}")
+                    self.publish(TOPIC_LAP, payload_s1)
 
-            # Für die allererste Überfahrt über Start/Ziel haben wir keine Runde
-            if prev_s1 is not None and prev_s2 is not None and prev_s2 > prev_s1:
-                s1_time = prev_s2 - prev_s1
-                s2_time = cu_ts - prev_s2
-                lap_time = cu_ts - prev_s1
+                # S2-Timestamp immer aktualisieren (für die spätere Lap-Berechnung)
+                self.last_s2_ts[addr] = cu_ts
+                logging.debug(f"addr={addr} hit S2 at {cu_ts}ms")
+                return
 
-                self.lap_counter[addr] += 1
-                lap_nr = self.lap_counter[addr]
+            # --------------------- Sector 1: Start/Ziel ------------------------
+            if sector == 1:
+                prev_s1 = self.last_s1_ts[addr]
+                prev_s2 = self.last_s2_ts[addr]
 
-                logging.info("in publish of code")
+                logging.info(f"s1={prev_s1}, s2={prev_s2}")
 
-                payload = {
-                    "eventType": "lap",
-                    "sessionId": self.current_session_id,
-                    "controllerAddress": addr,
-                    "lapNumber": lap_nr,
-                    "lapTimeMs": lap_time,
-                    "sectorTimes": {
-                        "s1": s1_time,
-                        "s2": s2_time,
-                    },
-                    "cuTimestampMs": cu_ts,
-                    "wallClockTs": wall_ts,
-                }
-                
-                logging.info(f"published: {payload}")
+                # Für die allererste Überfahrt über Start/Ziel haben wir keine Runde
+                if (
+                    self.current_session_id is not None
+                    and prev_s1 is not None
+                    and prev_s2 is not None
+                    and prev_s2 > prev_s1
+                ):
+                    # wichtige Reihenfolge:
+                    # - Runde, die wir JETZT fertigstellen, ist "fertige Runden + 1"
+                    lap_nr = self.lap_counter[addr] + 1
 
-                # Wenn du willst, dass NUR mit aktiver Session publisht wird:
-                # if self.current_session_id is not None:
-                #     self.publish(TOPIC_LAP, payload)
-                logging.info(f"session_id: {self.current_session_id}")
+                    s1_time = prev_s2 - prev_s1
+                    s2_time = cu_ts - prev_s2
+                    lap_time = cu_ts - prev_s1
 
-                self.publish(TOPIC_LAP, payload)
+                    # ---------- SEKTOR 2 EVENT ----------
+                    payload_s2 = {
+                        "eventType": "sector",
+                        "sessionId": self.current_session_id,
+                        "controllerAddress": addr,
+                        "lapNumber": lap_nr,
+                        "sectorNumber": 2,
+                        "sectorTimeMs": s2_time,
+                        "cuTimestampMs": cu_ts,
+                        "wallClockTs": wall_ts,
+                    }
+                    logging.info(f"SECTOR2: {payload_s2}")
+                    self.publish(TOPIC_LAP, payload_s2)
 
-                logging.info(
-                    f"LAP addr={addr} lap={lap_nr} "
-                    f"lapTime={lap_time}ms s1={s1_time}ms s2={s2_time}ms "
-                    f"sessionId={self.current_session_id}"
-                )
+                    # ---------- LAP EVENT ----------
+                    payload_lap = {
+                        "eventType": "lap",
+                        "sessionId": self.current_session_id,
+                        "controllerAddress": addr,
+                        "lapNumber": lap_nr,
+                        "lapTimeMs": lap_time,
+                        "sectorTimes": {
+                            "s1": s1_time,
+                            "s2": s2_time,
+                        },
+                        "cuTimestampMs": cu_ts,
+                        "wallClockTs": wall_ts,
+                    }
+                    logging.info(f"LAP: {payload_lap}")
+                    self.publish(TOPIC_LAP, payload_lap)
 
-            # Aktuelles Start/Ziel als neuer Referenzpunkt merken
-            self.last_s1_ts[addr] = cu_ts
-            return
+                    # internen Lap-Counter erst NACHDEM wir die Runde verschickt haben erhöhen
+                    self.lap_counter[addr] = lap_nr
 
-        # Falls irgendwann Sector 3 o.ä. auftaucht, ignorieren wir ihn vorerst:
-        logging.debug(f"Ignoring sector {sector} for addr={addr}")
+                    logging.info(
+                        f"LAP addr={addr} lap={lap_nr} "
+                        f"lapTime={lap_time}ms s1={s1_time}ms s2={s2_time}ms "
+                        f"sessionId={self.current_session_id}"
+                    )
 
+                # Aktuelles Start/Ziel als neuer Referenzpunkt merken
+                self.last_s1_ts[addr] = cu_ts
+                return
+
+            # Falls irgendwann Sector 3 o.ä. auftaucht, ignorieren wir ihn vorerst:
+            logging.debug(f"Ignoring sector {sector} for addr={addr}")
     # ---------------------------------------------------------------------
     def run(self):
         if self.cu is None:
