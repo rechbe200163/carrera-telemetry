@@ -13,6 +13,10 @@ export class SessionResultsService {
     private readonly sessionsRepo: SessionsRepo,
   ) {}
 
+  async getResultsBySessionId(id: number) {
+    return this.sessionResultsRepo.findBySession(id);
+  }
+
   async calculateSessionResults(sessionId: number) {
     const session = await this.sessionsRepo.findById(sessionId);
     if (!session) {

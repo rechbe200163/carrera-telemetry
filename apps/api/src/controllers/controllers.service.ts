@@ -22,8 +22,4 @@ export class ControllersService {
   update(id: number, updateControllerDto: UpdateControllerDto) {
     return this.controllersRepo.update(id, updateControllerDto);
   }
-
-  remove(id: number) {
-    return `This action removes a #${id} controller`;
-  }
 }

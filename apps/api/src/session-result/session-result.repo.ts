@@ -18,7 +18,7 @@ export class SessionResultsRepo {
       data,
     });
     if (!res) {
-      throw new Error('a error occurd');
+      throw new Error('a error occured');
     }
   }
 
@@ -26,6 +26,16 @@ export class SessionResultsRepo {
     return this.prisma.session_results.findMany({
       where: { session_id: sessionId },
       orderBy: [{ position: 'asc' }],
+      include: {
+        drivers: {
+          select: {
+            code: true,
+            color: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
     });
   }
 
