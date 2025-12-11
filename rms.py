@@ -20,7 +20,10 @@ logging.basicConfig(
 CU_DEVICE = "076123CC-BB75-6373-50E9-32C05B25B413"
 
 
-
+MQTT_USERNAME = ""
+MQTT_PASSWORD=""
+MQTT_HOST=""
+MQTT_PORT=0
 # Nur Lap-Events – genau EIN Topic mit Runde + Sektorzeiten
 TOPIC_LAP = "carrera/cu/lapTimes"
 
@@ -28,6 +31,7 @@ TOPIC_LAP = "carrera/cu/lapTimes"
 TOPIC_SESSION_START = "race_control/sessions/start"
 TOPIC_SESSION_STOP = "race_control/sessions/stop"
 TOPIC_SESSION_ACTIVE = "race_control/sessions/active"
+TOPIC_LIVE_DATA_ACITVE_SESSION = "race_control/sessions/liveData"
 
 
 # ---------------------------------------------------------------------------
