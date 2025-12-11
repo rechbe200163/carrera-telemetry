@@ -97,6 +97,11 @@ export const ENDPOINTS = {
     DELETE: (id: number) => `/session-entries/${id}`,
     GET_BY_SESSION_ID: (sessionId: number) => `/sessions/${sessionId}/entries`,
   },
+
+  SESSION_RESULTS: {
+    GET_ID: (id: number) => `/session-result/${id}`,
+  },
+
   DRIVER_STANDINGS: {
     POST: '/driver-standings',
     GET: '/driver-standings',

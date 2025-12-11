@@ -98,11 +98,13 @@ function ControllerTable({
                       </span>
                     </TableCell>
                     <TableCell className='text-right'>
-                      <EditController
-                        controller={controller}
-                        availableAddresses={availableAddresses}
-                      />
-                      <DeleteController controllerId={controller.id} />
+                      <div className='flex items-center justify-end gap-2'>
+                        <EditController
+                          controller={controller}
+                          availableAddresses={availableAddresses}
+                        />
+                        <DeleteController controllerId={controller.id} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
