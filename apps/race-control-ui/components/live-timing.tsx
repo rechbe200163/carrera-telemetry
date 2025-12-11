@@ -1,34 +1,81 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Circle, Clock, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { Sessions } from '@/lib/types';
-import { SessionTypeBadge } from './session-type-badge';
 
-function formatLapTime(ms: number): string {
+type DriverRuntimeState = {
+  driverId: number;
+  controllerAddress: number;
+  lapsCompleted: number;
+  currentLap: number;
+  lastLapMs: number | null;
+  bestLapMs: number | null;
+  sector1Ms: number | null;
+  sector2Ms: number | null;
+  totalTimeMs: number;
+  gapToLeaderMs: number | null;
+};
+
+type SessionRuntimeSnapshot = {
+  sessionId: number;
+  updatedAt: string;
+  drivers: DriverRuntimeState[];
+};
+
+type LiveDriverRow = {
+  id: string;
+  position: number;
+  lastLapTime: number | null;
+  bestLapTime: number | null;
+  s1Time: number | null;
+  s2Time: number | null;
+  currentLap: number;
+  gapToLeaderMs: number | null;
+  driver: {
+    code: string;
+    name: string;
+    teamColor: string;
+  };
+};
+
+function formatLapTime(ms: number | null | undefined): string {
+  if (ms == null) return '-';
   const totalSeconds = ms / 1000;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.floor(totalSeconds % 60);
   const milliseconds = Math.floor((totalSeconds % 1) * 1000);
   if (minutes > 0) {
-    return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds
+      .toString()
+      .padStart(3, '0')}`;
   }
   return `${seconds}.${milliseconds.toString().padStart(3, '0')}`;
 }
 
-function formatSectorTime(ms: number): string {
+function formatSectorTime(ms: number | null | undefined): string {
+  if (ms == null) return '-';
   const totalSeconds = ms / 1000;
   const seconds = Math.floor(totalSeconds);
   const milliseconds = Math.floor((totalSeconds % 1) * 1000);
   return `${seconds}.${milliseconds.toString().padStart(3, '0')}`;
 }
 
+function formatGap(ms: number | null | undefined): string {
+  if (ms == null) return '-';
+  if (ms === 0) return 'LDR';
+  const sign = ms > 0 ? '+' : '-';
+  return `${sign}${formatLapTime(Math.abs(ms))}`;
+}
+
 export default function LiveTimingComonent({ session }: { session: Sessions }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [snapshot, setSnapshot] = useState<SessionRuntimeSnapshot | null>(null);
 
+  // Zeit hochzählen (nur UI-Cosmetics)
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -36,6 +83,110 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Live-Daten via SSE holen
+  useEffect(() => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) {
+      console.error('NEXT_PUBLIC_API_URL is not set');
+      return;
+    }
+
+    const url = `${baseUrl}/live/sessions/${session.id}`;
+    const es = new EventSource(url);
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data) as SessionRuntimeSnapshot;
+        setSnapshot(data);
+      } catch (err) {
+        console.error('Failed to parse SSE data', err);
+      }
+    };
+
+    es.onerror = (err) => {
+      console.error('SSE error', err);
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [session.id]);
+
+  // Elapsed Time Format (für Practice/Qualy)
+  const formattedElapsed = useMemo(() => {
+    const total = elapsedSeconds;
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds
+      .toString()
+      .padStart(2, '0')}`;
+  }, [elapsedSeconds]);
+
+  // Mappe RuntimeSnapshot + Session-Metadaten -> UI-Row Model
+  const liveDriverData: LiveDriverRow[] = useMemo(() => {
+    if (!snapshot) return [];
+
+    // Wir probieren, Fahrerinfos aus session.session_entries zu holen
+    // und matchen über driverId oder controllerAddress
+    const entries = (session as any).session_entries ?? [];
+
+    return snapshot.drivers.map((d, index) => {
+      const entry =
+        entries.find(
+          (e: any) =>
+            e.driver_id === d.driverId ||
+            e.controller_address === d.controllerAddress
+        ) ?? null;
+
+      const driverInfo = entry?.driver ?? {};
+
+      const code =
+        driverInfo.code ??
+        (driverInfo.name
+          ? driverInfo.name
+              .split(' ')
+              .map((p: string) => p[0])
+              .join('')
+              .toUpperCase()
+          : `D${d.driverId}`);
+      const name = driverInfo.name ?? `Driver ${d.driverId}`;
+      const teamColor = driverInfo.team_color ?? '#ffffff';
+
+      return {
+        id: `${d.driverId}-${d.controllerAddress}`,
+        position: index + 1, // Snapshot kommt schon sortiert aus dem Backend
+        lastLapTime: d.lastLapMs,
+        bestLapTime: d.bestLapMs,
+        s1Time: d.sector1Ms,
+        s2Time: d.sector2Ms,
+        currentLap: d.lapsCompleted,
+        gapToLeaderMs: d.gapToLeaderMs,
+        driver: {
+          code,
+          name,
+          teamColor,
+        },
+      };
+    });
+  }, [snapshot, session]);
+
+  const leader = liveDriverData[0] ?? null;
+
+  const fastestLap = useMemo(() => {
+    let best: number | null = null;
+    for (const d of liveDriverData) {
+      if (d.bestLapTime == null) continue;
+      if (best == null || d.bestLapTime < best) {
+        best = d.bestLapTime;
+      }
+    }
+    return best ?? 0;
+  }, [liveDriverData]);
+
+  // Current Lap für Header (Leader-Runden)
+  const currentLapHeader = leader?.currentLap ?? 0;
 
   return (
     <div className='min-h-screen bg-[#0a0a0a] text-white flex flex-col'>
@@ -68,18 +219,18 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
             <div className='flex items-center gap-3 bg-[#1a1a1a] border border-[#333] rounded-lg px-6 py-3'>
               <Flag className='h-5 w-5 text-white/60' />
               <span className='font-mono text-4xl font-black text-white'>
-                {currentLap}
+                {currentLapHeader}
               </span>
               <span className='text-2xl text-white/40 font-light'>/</span>
               <span className='font-mono text-4xl font-bold text-white/50'>
-                {session.lap_limit}
+                {session.lap_limit ?? '-'}
               </span>
             </div>
           ) : (
             <div className='flex items-center gap-3 bg-[#1a1a1a] border border-[#333] rounded-lg px-6 py-3'>
               <Clock className='h-5 w-5 text-white/60' />
               <span className='font-mono text-4xl font-black text-white'>
-                {formatElapsed()}
+                {formattedElapsed}
               </span>
             </div>
           )}
@@ -99,7 +250,7 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
       {/* Main Timing Tower */}
       <main className='flex-1 px-8 py-6'>
         {/* Column Headers */}
-        <div className='grid grid-cols-[100px_8px_1fr_180px_180px_120px_120px_100px] gap-2 px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-[0.2em] border-b border-white/10'>
+        <div className='grid grid-cols-[100px_8px_1fr_180px_180px_120px_120px_120px_100px] gap-2 px-6 py-4 text-[11px] font-bold text-white/40 uppercase tracking-[0.2em] border-b border-white/10'>
           <span>Pos</span>
           <span></span>
           <span>Fahrer</span>
@@ -107,20 +258,27 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
           <span className='text-right'>Beste Runde</span>
           <span className='text-right'>S1</span>
           <span className='text-right'>S2</span>
+          <span className='text-right'>Gap</span>
           <span className='text-right'>Runden</span>
         </div>
 
         {/* Driver Rows */}
         <div className='divide-y divide-white/5'>
-          {liveDriverData.map((entry, idx) => {
+          {liveDriverData.map((entry) => {
             const isLeader = entry.position === 1;
-            const hasFastestLap = entry.bestLapTime === fastestLap;
-            const isPersonalBest = entry.lastLapTime <= entry.bestLapTime + 100;
+            const hasFastestLap =
+              entry.bestLapTime != null &&
+              fastestLap !== 0 &&
+              entry.bestLapTime === fastestLap;
+            const isPersonalBest =
+              entry.lastLapTime != null &&
+              entry.bestLapTime != null &&
+              entry.lastLapTime <= entry.bestLapTime + 100;
 
             return (
               <div
                 key={entry.id}
-                className={`grid grid-cols-[100px_8px_1fr_180px_180px_120px_120px_100px] gap-2 items-center px-6 py-5 transition-all duration-300 ${
+                className={`grid grid-cols-[100px_8px_1fr_180px_180px_120px_120px_120px_100px] gap-2 items-center px-6 py-5 transition-all duration-300 ${
                   isLeader
                     ? 'bg-gradient-to-r from-yellow-500/10 to-transparent'
                     : 'hover:bg-white/[0.02]'
@@ -162,17 +320,23 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
                   </span>
                 </div>
 
+                {/* Last Lap */}
                 <div className='text-right'>
                   <span
-                    className={`font-mono text-3xl font-black tracking-tight ${isPersonalBest ? 'text-green-400' : 'text-white'}`}
+                    className={`font-mono text-3xl font-black tracking-tight ${
+                      isPersonalBest ? 'text-green-400' : 'text-white'
+                    }`}
                   >
                     {formatLapTime(entry.lastLapTime)}
                   </span>
                 </div>
 
+                {/* Best Lap */}
                 <div className='text-right flex items-center justify-end gap-3'>
                   <span
-                    className={`font-mono text-3xl font-bold tracking-tight ${hasFastestLap ? 'text-purple-400' : 'text-white/50'}`}
+                    className={`font-mono text-3xl font-bold tracking-tight ${
+                      hasFastestLap ? 'text-purple-400' : 'text-white/50'
+                    }`}
                   >
                     {formatLapTime(entry.bestLapTime)}
                   </span>
@@ -183,18 +347,28 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
                   )}
                 </div>
 
+                {/* Sector 1 */}
                 <div className='text-right'>
                   <span className='font-mono text-2xl font-bold text-cyan-400'>
                     {formatSectorTime(entry.s1Time)}
                   </span>
                 </div>
 
+                {/* Sector 2 */}
                 <div className='text-right'>
                   <span className='font-mono text-2xl font-bold text-cyan-400'>
                     {formatSectorTime(entry.s2Time)}
                   </span>
                 </div>
 
+                {/* Gap */}
+                <div className='text-right'>
+                  <span className='font-mono text-2xl font-bold text-white/70'>
+                    {formatGap(entry.gapToLeaderMs)}
+                  </span>
+                </div>
+
+                {/* Laps */}
                 <div className='text-right'>
                   <span className='font-mono text-3xl font-black text-white/70'>
                     {entry.currentLap}
@@ -203,6 +377,12 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
               </div>
             );
           })}
+
+          {liveDriverData.length === 0 && (
+            <div className='px-6 py-10 text-center text-sm text-white/40'>
+              Noch keine Live-Daten empfangen – warte auf erste Runden…
+            </div>
+          )}
         </div>
       </main>
 
@@ -216,11 +396,13 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
               </p>
               <div className='flex items-center gap-3'>
                 <span className='font-mono text-3xl text-purple-400 font-black'>
-                  {formatLapTime(fastestLap)}
+                  {fastestLap ? formatLapTime(fastestLap) : '-'}
                 </span>
-                <span className='bg-purple-500/20 text-purple-400 text-xs font-bold px-2 py-1 rounded border border-purple-500/30'>
-                  {leader?.driver.code}
-                </span>
+                {leader && (
+                  <span className='bg-purple-500/20 text-purple-400 text-xs font-bold px-2 py-1 rounded border border-purple-500/30'>
+                    {leader.driver.code}
+                  </span>
+                )}
               </div>
             </div>
             <div>
@@ -245,6 +427,10 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
             <div className='flex items-center gap-2'>
               <span className='w-4 h-4 rounded bg-cyan-400'></span>
               <span className='text-white/60'>Sektor Zeit</span>
+            </div>
+            <div className='flex items-center gap-2'>
+              <span className='w-4 h-4 rounded bg-white/60'></span>
+              <span className='text-white/60'>Gap zum Leader</span>
             </div>
           </div>
         </div>

@@ -143,6 +143,21 @@ export interface LeaderBoard {
   };
 }
 
-// export interface SessionEntriesWithDrivers extends SessionEntries {
-//   drivers: Pick<Drivers, 'code' | 'color' | 'last_name' | 'first_name'>;
-// }
+type DriverRuntimeState = {
+  driverId: number;
+  controllerAddress: number;
+  lapsCompleted: number;
+  currentLap: number;
+  lastLapMs: number | null;
+  bestLapMs: number | null;
+  sector1Ms: number | null;
+  sector2Ms: number | null;
+  totalTimeMs: number;
+  gapToLeaderMs: number | null;
+};
+
+type SessionRuntimeSnapshot = {
+  sessionId: number;
+  updatedAt: string;
+  drivers: DriverRuntimeState[];
+};

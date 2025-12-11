@@ -1,9 +1,6 @@
 import LiveTimingComonent from '@/components/live-timing';
-import { SessionTypeBadge } from '@/components/session-type-badge';
-import { Button } from '@/components/ui/button';
 import { getSessionById } from '@/lib/api/session-api.service';
-import { ArrowLeft, Circle, Clock, Flag } from 'lucide-react';
-import Link from 'next/link';
+import { getSessionEntriesBySessionId } from '@/lib/api/session-entries-api.service';
 
 export default async function LiveTimingPage({
   params,
@@ -12,5 +9,6 @@ export default async function LiveTimingPage({
 }) {
   const { id } = await params;
   const session = await getSessionById(Number(id));
+  const sessionEntries = await getSessionEntriesBySessionId(Number(id));
   return <LiveTimingComonent session={session} />;
 }
