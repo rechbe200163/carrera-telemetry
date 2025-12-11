@@ -31,11 +31,10 @@ export class SessionsService {
         }
 
         await this.sessionsRepo.startSession(sessionId, {
-          time_limit_seconds: dto.durationMinutes,
+          time_limit_seconds: dto.durationMinutes * 60,
           lap_limit: null,
         });
 
-        const seconds = dto.durationMinutes * 60;
         this.sessionRuntimeService.onSessionStart(sessionId);
         break;
       case 'RACE':

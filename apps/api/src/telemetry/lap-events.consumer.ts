@@ -31,6 +31,7 @@ export class LapEventsConsumer implements OnModuleInit {
     this.mqtt.subscribe('race_control/sessions/stop', (payload) => {
       this.handleSessionStopEvent(payload).catch(console.error);
     });
+    console.log('here');
   }
 
   private async handleSessionStartEvent(payload: any) {
@@ -80,6 +81,9 @@ export class LapEventsConsumer implements OnModuleInit {
       is_pit_out_lap: false,
       is_valid: true,
     });
+
+    console.log('payload', payload);
+
     await this.sessionRuntime.onLapPersisted(
       this.activeSessionId,
       payload.lapNumber,
