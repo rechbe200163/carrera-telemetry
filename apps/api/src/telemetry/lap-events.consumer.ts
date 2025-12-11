@@ -137,10 +137,15 @@ export class LapEventsConsumer implements OnModuleInit {
 
       console.log('payload', lapPayload);
 
-      await this.sessionRuntime.onLapPersisted(
-        this.activeSessionId,
-        lapPayload.lapNumber,
-      );
+      await this.sessionRuntime.onLapPersisted({
+        sessionId: this.activeSessionId,
+        driverId,
+        controllerAddress: lapPayload.controllerAddress,
+        lapNumber: lapPayload.lapNumber,
+        lapTimeMs: lapPayload.lapTimeMs,
+        sector1Ms: lapPayload.sectorTimes?.s1 ?? null,
+        sector2Ms: lapPayload.sectorTimes?.s2 ?? null,
+      });
 
       return;
     }

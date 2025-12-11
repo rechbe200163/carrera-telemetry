@@ -144,28 +144,61 @@ export class SessionRuntimeService {
    * Hier entscheidest du, ob die Session endet.
    * (Logik wie vorher – zusätzlich nutzen wir es für Live-State.)
    */
-  async onLapPersisted(sessionId: number, lapNumber: number): Promise<void> {
+  async onLapPersisted(args: {
+    sessionId: number;
+    driverId: number;
+    controllerAddress: number;
+    lapNumber: number;
+    lapTimeMs: number;
+    sector1Ms?: number | null;
+    sector2Ms?: number | null;
+  }): Promise<void> {
+    const {
+      sessionId,
+      driverId,
+      controllerAddress,
+      lapNumber,
+      lapTimeMs,
+      sector1Ms,
+      sector2Ms,
+    } = args;
+
     const state = this.runtimeBySession.get(sessionId);
     if (!state) {
-      // kann z.B. sein, wenn du bisher keine Runtime gesetzt hast
       return;
     }
 
-    const now = Date.now();
+    // Live-State für diesen Fahrer holen/erzeugen
+    const driver = this.ensureDriverState(
+      sessionId,
+      driverId,
+      controllerAddress,
+    );
 
-    // --- Live-State grob updaten: alle Fahrer, die gerade auf dieser Lap sind ---
-    const driversMap = this.driversBySession.get(sessionId);
-    if (driversMap) {
-      for (const driverState of driversMap.values()) {
-        if (driverState.currentLap === lapNumber) {
-          driverState.lapsCompleted = lapNumber;
-          // Hinweis: lastLapMs / bestLapMs / totalTimeMs
-          // könntest du später erweitern, wenn du sie im Event mitgibst.
-        }
-      }
-      this.recalculateGaps(sessionId);
-      this.broadcastSnapshot(sessionId);
+    // Lap-Zustand updaten
+    driver.lapsCompleted = lapNumber;
+    driver.currentLap = lapNumber; // oder lapNumber + 1, wenn du sofort auf nächste Runde springen willst
+    driver.lastLapMs = lapTimeMs;
+    driver.bestLapMs =
+      driver.bestLapMs == null
+        ? lapTimeMs
+        : Math.min(driver.bestLapMs, lapTimeMs);
+    driver.totalTimeMs += lapTimeMs;
+
+    if (sector1Ms != null) {
+      driver.sector1Ms = sector1Ms;
     }
+    if (sector2Ms != null) {
+      driver.sector2Ms = sector2Ms;
+    }
+
+    // Gaps & Snapshot neu berechnen
+    this.recalculateGaps(sessionId);
+    this.broadcastSnapshot(sessionId);
+
+    // ---- ab hier: dein bisheriges Limit-/Finish-Handling ----
+
+    const now = Date.now();
 
     // 1) Laps-basierte Sessions (z.B. RACE)
     if (
@@ -192,7 +225,6 @@ export class SessionRuntimeService {
       }
     }
   }
-
   // ---------------------------------------------------------------------------
   // NEU: Live-Updates von LapEventsConsumer
   // ---------------------------------------------------------------------------
