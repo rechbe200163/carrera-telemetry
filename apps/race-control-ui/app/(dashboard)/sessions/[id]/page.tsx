@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Circle, Square, Zap } from 'lucide-react';
+import { ArrowLeft, Circle, ExternalLink, Square, Zap } from 'lucide-react';
 import { SessionTypeBadge } from '@/components/session-type-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
@@ -122,9 +122,11 @@ export default async function SessionDetailPage({
                       />
                     )}
                   </div>
-                  <Button variant='destructive' className='w-full'>
-                    <Square className='mr-2 h-4 w-4' />
-                    Session beenden
+                  <Button className='w-full' asChild>
+                    <Link href={`/sessions/${session.id}/live`}>
+                      <ExternalLink className='mr-2 h-4 w-4' />
+                      Live Timing öffnen
+                    </Link>
                   </Button>
                 </>
               )}
