@@ -118,7 +118,7 @@ export default async function SessionDetailPage({
                       />
                     ) : (
                       <TimedSessionCountdown
-                        timeLimitSeconds={session.time_limit_seconds!}
+                        timeLimitMinutes={session.time_limit_seconds!}
                       />
                     )}
                   </div>

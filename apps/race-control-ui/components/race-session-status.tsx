@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RotateCcw, Waypoints } from 'lucide-react';
+import { Waypoints } from 'lucide-react';
 import { ENDPOINTS } from '@/lib/enpoints';
 
 type RaceSessionStatusProps = {
@@ -23,6 +23,7 @@ export function RaceSessionStatus({
 
     es.onopen = () => {
       setConnected(true);
+      console.log('connected');
     };
 
     es.onmessage = (event) => {
@@ -40,11 +41,13 @@ export function RaceSessionStatus({
           setCurrentLap(num);
         }
       }
+      console.log('event', event);
     };
 
-    es.onerror = () => {
+    es.onerror = (error) => {
       setConnected(false);
       // Option: es.close(); // wenn du bei Fehler direkt disconnecten willst
+      console.log(error);
     };
 
     return () => {
@@ -65,7 +68,7 @@ export function RaceSessionStatus({
       </div>
 
       <span className='text-xs text-muted-foreground'>
-        {connected ? 'live' : 'offline'}
+        {connected ? 'live is live' : 'na na na na na'}
       </span>
     </div>
   );

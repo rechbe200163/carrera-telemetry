@@ -5,7 +5,7 @@ import { Clock } from 'lucide-react';
 
 type TimedSessionCountdownProps = {
   // Sekunden, die der Server als Limit speichert
-  timeLimitSeconds: number | null;
+  timeLimitMinutes: number | null;
 };
 
 function formatTime(totalSeconds: number): string {
@@ -18,15 +18,15 @@ function formatTime(totalSeconds: number): string {
 }
 
 export function TimedSessionCountdown({
-  timeLimitSeconds,
+  timeLimitMinutes,
 }: TimedSessionCountdownProps) {
-  const [remaining, setRemaining] = useState<number>(timeLimitSeconds ?? 0);
+  const [remaining, setRemaining] = useState<number>(timeLimitMinutes ?? 0);
 
   useEffect(() => {
     // Wenn kein Limit gesetzt ist, kein Countdown
-    if (!timeLimitSeconds || timeLimitSeconds <= 0) return;
+    if (!timeLimitMinutes || timeLimitMinutes <= 0) return;
 
-    setRemaining(timeLimitSeconds * 60);
+    setRemaining(timeLimitMinutes);
 
     const interval = setInterval(() => {
       setRemaining((prev) => {
@@ -39,13 +39,13 @@ export function TimedSessionCountdown({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timeLimitSeconds]);
+  }, [timeLimitMinutes]);
 
   return (
     <div className='flex items-center justify-center gap-2'>
       <Clock className='h-4 w-4 text-muted-foreground' />
       <span className='font-mono text-2xl font-bold'>
-        {timeLimitSeconds ? formatTime(remaining) : '-'}
+        {timeLimitMinutes ? formatTime(remaining) : '-'}
       </span>
       <span className='text-muted-foreground'>min</span>
     </div>
