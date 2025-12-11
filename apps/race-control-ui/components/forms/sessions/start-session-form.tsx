@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { FormState, initialState } from '@/lib/fom.types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Clock, RotateCcw } from 'lucide-react';
 import { startSessionAction } from '@/lib/actions/sessions.actions';
 import { SessionType } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 type StartSessionFormProps = {
   sessionId: string | number;
@@ -20,10 +21,16 @@ export function StartSessionForm({
   sessionType,
   hasEntries,
 }: StartSessionFormProps) {
+  const router = useRouter();
   const [formState, action, isPending] = useActionState<FormState, FormData>(
     startSessionAction.bind(null, Number(sessionId), sessionType),
     initialState
   );
+  useEffect(() => {
+    if (formState.success) {
+      router.push(`/sessions/${sessionId}/live`);
+    }
+  });
 
   const isRace = sessionType === 'RACE';
 
