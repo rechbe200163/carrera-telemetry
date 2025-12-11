@@ -1,12 +1,33 @@
 // src/sessions/session-runtime.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { SessionsRepo } from './sessions.repo';
-import { LapsRepo } from 'src/laps/laps.repo';
 import { MqttService } from 'src/mqtt/mqtt.service';
-import { SessionType, Stauts } from 'generated/prisma/enums';
-import { SessionResultsRepo } from 'src/session-result/session-result.repo';
+import { SessionType } from 'generated/prisma/enums';
 import { SessionResultsService } from 'src/session-result/session-result.service';
-// wenn du @prisma/client verwendest:
+import { Observable, Subject } from 'rxjs';
+
+// --- Runtime-Typen für Live-UI ---
+
+export type DriverRuntimeState = {
+  driverId: number;
+  controllerAddress: number;
+  lapsCompleted: number;
+  currentLap: number;
+  lastLapMs: number | null;
+  bestLapMs: number | null;
+  sector1Ms: number | null;
+  sector2Ms: number | null;
+  totalTimeMs: number;
+  gapToLeaderMs: number | null;
+};
+
+export type SessionRuntimeSnapshot = {
+  sessionId: number;
+  updatedAt: string;
+  drivers: DriverRuntimeState[];
+};
+
+// --- Session-Metadaten für Limit-Logik ---
 
 type SessionRuntimeState = {
   sessionId: number;
@@ -20,14 +41,30 @@ type SessionRuntimeState = {
 export class SessionRuntimeService {
   private readonly logger = new Logger(SessionRuntimeService.name);
 
-  // falls du irgendwann mehrere Sessions parallel fährst
+  // Zeit-/Lap-Limit-Logik pro Session
   private readonly runtimeBySession = new Map<number, SessionRuntimeState>();
+
+  // Live-State pro Session: sessionId -> (driverId -> DriverRuntimeState)
+  private readonly driversBySession = new Map<
+    number,
+    Map<number, DriverRuntimeState>
+  >();
+
+  // SSE-Streams pro Session
+  private readonly subjectsBySession = new Map<
+    number,
+    Subject<SessionRuntimeSnapshot>
+  >();
 
   constructor(
     private readonly sessionsRepo: SessionsRepo,
     private readonly sessionResultsService: SessionResultsService,
     private readonly mqtt: MqttService,
   ) {}
+
+  // ---------------------------------------------------------------------------
+  // SESSION-LIFECYCLE (wie bisher, nur leicht erweitert)
+  // ---------------------------------------------------------------------------
 
   /**
    * Wird aufgerufen, wenn du im Backend / Frontend eine Session startest.
@@ -50,7 +87,11 @@ export class SessionRuntimeService {
 
     this.runtimeBySession.set(sessionId, state);
 
-    // optional: "active" Topic nach draußen schicken (für Python, etc.)
+    // initiale Live-Maps anlegen/clearen
+    this.driversBySession.set(sessionId, new Map());
+    this.ensureSubject(sessionId); // SSE-Subject vorbereiten
+
+    // optional: "start" Topic nach draußen schicken (für Python, etc.)
     await this.mqtt.publish('race_control/sessions/start', {
       sessionId,
     });
@@ -61,8 +102,47 @@ export class SessionRuntimeService {
   }
 
   /**
+   * Session wirklich beenden:
+   * - status = FINISHED
+   * - end_time setzen
+   * - session_results berechnen & speichern
+   * - Session aus Runtime-Maps entfernen
+   * - MQTT "stop" publishen
+   */
+  async finishSession(sessionId: number): Promise<void> {
+    // 1) Session in DB schließen
+    await this.sessionsRepo.finishSession(sessionId);
+
+    // 2) Ergebnisse berechnen
+    const results =
+      await this.sessionResultsService.calculateSessionResults(sessionId);
+
+    // 3) optional: an Python / CU "stop" schicken
+    await this.mqtt.publish('race_control/sessions/stop', {
+      sessionId,
+    });
+
+    // 4) Live-State aufräumen
+    this.runtimeBySession.delete(sessionId);
+    this.driversBySession.delete(sessionId);
+
+    const subj = this.subjectsBySession.get(sessionId);
+    if (subj) {
+      // letztes Snapshot senden, dann Stream schließen
+      subj.next(this.buildSnapshot(sessionId));
+      subj.complete();
+      this.subjectsBySession.delete(sessionId);
+    }
+
+    this.logger.log(
+      `Session ${sessionId} finished with ${results.length} results entries.`,
+    );
+  }
+
+  /**
    * Wird nach jedem gespeicherten Lap aufgerufen.
    * Hier entscheidest du, ob die Session endet.
+   * (Logik wie vorher – zusätzlich nutzen wir es für Live-State.)
    */
   async onLapPersisted(sessionId: number, lapNumber: number): Promise<void> {
     const state = this.runtimeBySession.get(sessionId);
@@ -72,6 +152,20 @@ export class SessionRuntimeService {
     }
 
     const now = Date.now();
+
+    // --- Live-State grob updaten: alle Fahrer, die gerade auf dieser Lap sind ---
+    const driversMap = this.driversBySession.get(sessionId);
+    if (driversMap) {
+      for (const driverState of driversMap.values()) {
+        if (driverState.currentLap === lapNumber) {
+          driverState.lapsCompleted = lapNumber;
+          // Hinweis: lastLapMs / bestLapMs / totalTimeMs
+          // könntest du später erweitern, wenn du sie im Event mitgibst.
+        }
+      }
+      this.recalculateGaps(sessionId);
+      this.broadcastSnapshot(sessionId);
+    }
 
     // 1) Laps-basierte Sessions (z.B. RACE)
     if (
@@ -99,35 +193,181 @@ export class SessionRuntimeService {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // NEU: Live-Updates von LapEventsConsumer
+  // ---------------------------------------------------------------------------
+
   /**
-   * Session wirklich beenden:
-   * - status = FINISHED
-   * - end_time setzen
-   * - session_results berechnen & speichern
-   * - Session aus Runtime-Map entfernen
-   * - optional MQTT Events publishen
+   * Wird vom LapEventsConsumer bei jedem Sector-Event aufgerufen.
+   * Speichert nur in-memory und triggert SSE, KEINE DB-Änderung.
    */
-  async finishSession(sessionId: number): Promise<void> {
-    // 1) Session in DB schließen
-    await this.sessionsRepo.finishSession(sessionId);
-
-    // 2) Ergebnisse berechnen
-    const results =
-      await this.sessionResultsService.calculateSessionResults(sessionId);
-
-    // 5) optional: an Python / CU "stop" schicken
-    await this.mqtt.publish('race_control/sessions/stop', {
+  async onSectorUpdate(args: {
+    sessionId: number;
+    driverId: number;
+    controllerAddress: number;
+    lapNumber: number;
+    sectorNumber: 1 | 2;
+    sectorTimeMs: number;
+    wallClockTs: number;
+  }): Promise<void> {
+    const {
       sessionId,
-    });
+      driverId,
+      controllerAddress,
+      lapNumber,
+      sectorNumber,
+      sectorTimeMs,
+    } = args;
 
-    this.runtimeBySession.delete(sessionId);
-    this.logger.log(
-      `Session ${sessionId} finished with ${results.length} results entries.`,
+    const driver = this.ensureDriverState(
+      sessionId,
+      driverId,
+      controllerAddress,
     );
+
+    driver.currentLap = lapNumber;
+
+    if (sectorNumber === 1) {
+      driver.sector1Ms = sectorTimeMs;
+    } else if (sectorNumber === 2) {
+      driver.sector2Ms = sectorTimeMs;
+    }
+
+    // totalTimeMs könntest du hier optional inkrementell aufbauen,
+    // wenn du die Sektoren pro Runde hinzufügen willst.
+
+    this.broadcastSnapshot(sessionId);
   }
 
+  // ---------------------------------------------------------------------------
+  // NEU: SSE-API für Live-Frontend
+  // ---------------------------------------------------------------------------
+
   /**
-   * Berechnet session_results anhand der laps-Tabelle.
-   * Punkte-Logik ist bewusst simpel gehalten – kannst du später ersetzen.
+   * Wird vom LiveSessionsController verwendet, um einen SSE-Stream pro Session zu öffnen.
    */
+  streamSession(sessionId: number): Observable<SessionRuntimeSnapshot> {
+    const subject = this.ensureSubject(sessionId);
+    // initialer Snapshot (kann am Anfang noch leer sein)
+    const snap = this.buildSnapshot(sessionId);
+    setTimeout(() => subject.next(snap), 0);
+    return subject.asObservable();
+  }
+
+  // ---------------------------------------------------------------------------
+  // interne Helfer für Live-State & SSE
+  // ---------------------------------------------------------------------------
+
+  private ensureDriverState(
+    sessionId: number,
+    driverId: number,
+    controllerAddress: number,
+  ): DriverRuntimeState {
+    if (!this.driversBySession.has(sessionId)) {
+      this.driversBySession.set(sessionId, new Map());
+    }
+    const map = this.driversBySession.get(sessionId)!;
+
+    if (!map.has(driverId)) {
+      map.set(driverId, {
+        driverId,
+        controllerAddress,
+        lapsCompleted: 0,
+        currentLap: 1,
+        lastLapMs: null,
+        bestLapMs: null,
+        sector1Ms: null,
+        sector2Ms: null,
+        totalTimeMs: 0,
+        gapToLeaderMs: null,
+      });
+    }
+    return map.get(driverId)!;
+  }
+
+  private ensureSubject(sessionId: number): Subject<SessionRuntimeSnapshot> {
+    if (!this.subjectsBySession.has(sessionId)) {
+      this.subjectsBySession.set(
+        sessionId,
+        new Subject<SessionRuntimeSnapshot>(),
+      );
+    }
+    return this.subjectsBySession.get(sessionId)!;
+  }
+
+  private buildSnapshot(sessionId: number): SessionRuntimeSnapshot {
+    const driversMap = this.driversBySession.get(sessionId) ?? new Map();
+    const unsorted = Array.from(driversMap.values());
+    const drivers = this.sortDrivers(sessionId, unsorted);
+
+    return {
+      sessionId,
+      updatedAt: new Date().toISOString(),
+      drivers,
+    };
+  }
+
+  private recalculateGaps(sessionId: number): void {
+    const driversMap = this.driversBySession.get(sessionId);
+    if (!driversMap) return;
+
+    const drivers = Array.from(driversMap.values()).sort(
+      (a, b) =>
+        b.lapsCompleted - a.lapsCompleted || a.totalTimeMs - b.totalTimeMs,
+    );
+
+    if (drivers.length === 0) return;
+
+    const leader = drivers[0];
+    for (const d of drivers) {
+      d.gapToLeaderMs = d.totalTimeMs - leader.totalTimeMs;
+    }
+  }
+
+  private broadcastSnapshot(sessionId: number): void {
+    const subject = this.subjectsBySession.get(sessionId);
+    if (!subject) return;
+    const snap = this.buildSnapshot(sessionId);
+    subject.next(snap);
+  }
+
+  private sortDrivers(
+    sessionId: number,
+    drivers: DriverRuntimeState[],
+  ): DriverRuntimeState[] {
+    const runtime = this.runtimeBySession.get(sessionId);
+    const type = runtime?.sessionType;
+
+    // PRACTICE / QUALIFYING: nach Best Lap sortieren
+    if (
+      type === SessionType.PRACTICE ||
+      type === SessionType.QUALYFING // genaue Enum-Bezeichnung aus deinem Prisma-Enum
+    ) {
+      return [...drivers].sort((a, b) => {
+        const aBest = a.bestLapMs ?? Number.MAX_SAFE_INTEGER;
+        const bBest = b.bestLapMs ?? Number.MAX_SAFE_INTEGER;
+
+        if (aBest !== bBest) return aBest - bBest; // kleinere Best Lap nach vorne
+        // Tie-Breaker: wer mehr Runden hat, ist vorne
+        if (a.lapsCompleted !== b.lapsCompleted) {
+          return b.lapsCompleted - a.lapsCompleted;
+        }
+        // letzter Tie-Breaker, damit Sortierung stabil ist:
+        return a.driverId - b.driverId;
+      });
+    }
+
+    // RACE (und z.B. FUN): nach Runden und Total Time
+    return [...drivers].sort((a, b) => {
+      // mehr Runden -> weiter vorne
+      if (a.lapsCompleted !== b.lapsCompleted) {
+        return b.lapsCompleted - a.lapsCompleted;
+      }
+      // gleiche Runden -> geringere Gesamtzeit -> weiter vorne
+      if (a.totalTimeMs !== b.totalTimeMs) {
+        return a.totalTimeMs - b.totalTimeMs;
+      }
+      return a.driverId - b.driverId;
+    });
+  }
 }

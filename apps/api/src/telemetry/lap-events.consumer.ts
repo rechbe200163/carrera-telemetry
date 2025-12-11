@@ -4,6 +4,32 @@ import { MqttService } from 'src/mqtt/mqtt.service';
 import { SessionRuntimeService } from 'src/sessions/session-runtime.service';
 import { SessionsRepo } from 'src/sessions/sessions.repo';
 
+type BasePayload = {
+  eventType?: 'lap' | 'sector';
+  sessionId: number;
+  controllerAddress: number;
+  lapNumber: number;
+  cuTimestampMs: number;
+  wallClockTs: number;
+};
+
+type LapPayload = BasePayload & {
+  eventType?: 'lap';
+  lapTimeMs: number;
+  sectorTimes: {
+    s1: number;
+    s2: number;
+  };
+};
+
+type SectorPayload = BasePayload & {
+  eventType: 'sector';
+  sectorNumber: 1 | 2;
+  sectorTimeMs: number;
+};
+
+type Payload = LapPayload | SectorPayload;
+
 @Injectable()
 export class LapEventsConsumer implements OnModuleInit {
   private activeSessionId: number | null = null;
@@ -17,8 +43,8 @@ export class LapEventsConsumer implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    // 1) Lap-Events
-    this.mqtt.subscribe('carrera/cu/lapTimes', (payload) => {
+    // 1) Lap-/Sector-Events
+    this.mqtt.subscribe('carrera/cu/lapTimes', (payload: Payload) => {
       this.handleLapEvent(payload).catch(console.error);
     });
 
@@ -31,7 +57,8 @@ export class LapEventsConsumer implements OnModuleInit {
     this.mqtt.subscribe('race_control/sessions/stop', (payload) => {
       this.handleSessionStopEvent(payload).catch(console.error);
     });
-    console.log('here');
+
+    console.log('LapEventsConsumer initialized');
   }
 
   private async handleSessionStartEvent(payload: any) {
@@ -56,37 +83,64 @@ export class LapEventsConsumer implements OnModuleInit {
 
   private async handleSessionStopEvent(payload: any) {
     const sessionId = payload.sessionId as number | null;
-    // Du könntest hier checken, ob es dieselbe aktive Session ist
     if (this.activeSessionId === sessionId) {
       this.activeSessionId = null;
       this.controllerMap.clear();
     }
   }
 
-  private async handleLapEvent(payload: any) {
+  private async handleLapEvent(payload: Payload) {
+    // Sicherheitsgurt: Session mismatch ignorieren
     if (!this.activeSessionId) return;
+    if (payload.sessionId !== this.activeSessionId) return;
 
     const driverId = this.controllerMap.get(payload.controllerAddress);
     if (!driverId) return;
 
-    await this.lapsRepo.create({
-      session_id: this.activeSessionId,
-      driver_id: driverId,
-      lap_number: payload.lapNumber,
-      date_start: new Date(payload.wallClockTs),
-      lap_duration_ms: payload.lapTimeMs,
-      duration_sector1: payload.sectorTimes?.s1 ?? null,
-      duration_sector2: payload.sectorTimes?.s2 ?? null,
-      duration_sector3: null,
-      is_pit_out_lap: false,
-      is_valid: true,
-    });
+    const eventType: 'lap' | 'sector' = payload.eventType ?? 'lap';
 
-    console.log('payload', payload);
+    // ---------------- SECTOR-Event -> nur Live-Update ----------------
+    if (eventType === 'sector') {
+      const sectorPayload = payload as SectorPayload;
 
-    await this.sessionRuntime.onLapPersisted(
-      this.activeSessionId,
-      payload.lapNumber,
-    );
+      await this.sessionRuntime.onSectorUpdate({
+        sessionId: this.activeSessionId,
+        driverId,
+        controllerAddress: sectorPayload.controllerAddress,
+        lapNumber: sectorPayload.lapNumber,
+        sectorNumber: sectorPayload.sectorNumber,
+        sectorTimeMs: sectorPayload.sectorTimeMs,
+        wallClockTs: sectorPayload.wallClockTs,
+      });
+
+      return;
+    }
+
+    // ---------------- LAP-Event -> DB + Runtime ----------------
+    if (eventType === 'lap') {
+      const lapPayload = payload as LapPayload;
+
+      await this.lapsRepo.create({
+        session_id: this.activeSessionId,
+        driver_id: driverId,
+        lap_number: lapPayload.lapNumber,
+        date_start: new Date(lapPayload.wallClockTs),
+        lap_duration_ms: lapPayload.lapTimeMs,
+        duration_sector1: lapPayload.sectorTimes?.s1 ?? null,
+        duration_sector2: lapPayload.sectorTimes?.s2 ?? null,
+        duration_sector3: null,
+        is_pit_out_lap: false,
+        is_valid: true,
+      });
+
+      console.log('payload', lapPayload);
+
+      await this.sessionRuntime.onLapPersisted(
+        this.activeSessionId,
+        lapPayload.lapNumber,
+      );
+
+      return;
+    }
   }
 }

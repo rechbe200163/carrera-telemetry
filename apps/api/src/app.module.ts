@@ -13,6 +13,7 @@ import { LapsModule } from './laps/laps.module';
 import { SessionEntryModule } from './session-entry/session-entry.module';
 import { SessionResultModule } from './session-result/session-result.module';
 import { DriverStandingsModule } from './driver-standings/driver-standings.module';
+import { LiveModule } from './live/live.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { DriverStandingsModule } from './driver-standings/driver-standings.modul
     SessionEntryModule,
     SessionResultModule,
     DriverStandingsModule,
+    LiveModule,
   ],
   controllers: [AppController],
   providers: [AppService],
