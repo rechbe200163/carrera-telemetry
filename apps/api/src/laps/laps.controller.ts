@@ -57,6 +57,8 @@ export class LapsController {
   ): Observable<SseEvent> {
     const id = sessionId ? Number(sessionId) : undefined;
 
+    console.log('id', id);
+
     return this.mqttService.lapEvents$().pipe(
       filter((event: any) => !id || event.sessionId === id),
       map((event) => ({
