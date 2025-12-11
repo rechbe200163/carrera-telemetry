@@ -6,6 +6,7 @@ from typing import Dict, Optional
 
 import paho.mqtt.client as mqtt
 from carreralib import ControlUnit  # WICHTIG: nur ControlUnit importieren
+from carreralib.connection import TimeoutError as CuTimeoutError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,27 +17,17 @@ logging.basicConfig(
 # ENV / CONFIG
 # ---------------------------------------------------------------------------
 
-CU_DEVICE = os.getenv("CU_DEVICE", "D2:B9:57:15:EE:AC")
+CU_DEVICE = "076123CC-BB75-6373-50E9-32C05B25B413"
 
-MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_USERNAME = os.getenv("MQTT_USERNAME", "mqtt_user")
-MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "mqtt_pass")
+
 
 # Nur Lap-Events – genau EIN Topic mit Runde + Sektorzeiten
-TOPIC_LAP = os.getenv("MQTT_TOPIC_LAP_TIMES", "carrera/cu/lapTimes")
-
-# Optional: Raw Timer Events (für Debugging)
-TOPIC_RAW = os.getenv("MQTT_TOPIC_TIMER_RAW", "carrera/cu/timerRaw")
+TOPIC_LAP = "carrera/cu/lapTimes"
 
 # Control-Topics vom Backend
-TOPIC_SESSION_START = os.getenv(
-    "MQTT_TOPIC_SESSION_START", "race_control/sessions/start"
-)
-TOPIC_SESSION_STOP = os.getenv("MQTT_TOPIC_SESSION_STOP", "race_control/sessions/stop")
-TOPIC_SESSION_ACTIVE = os.getenv(
-    "MQTT_TOPIC_SESSION_ACTIVE", "race_control/sessions/active"
-)
+TOPIC_SESSION_START = "race_control/sessions/start"
+TOPIC_SESSION_STOP = "race_control/sessions/stop"
+TOPIC_SESSION_ACTIVE = "race_control/sessions/active"
 
 
 # ---------------------------------------------------------------------------
@@ -107,6 +98,8 @@ class CarreraMqttBridge:
         logging.info("Sending start command to CU ...")
         try:
             self.cu.start()
+        except CuTimeoutError as e:
+            logging.error(f"CU start timeout (BLE): {e} – ignoring and keeping bridge alive")
         except Exception as e:
             logging.error(f"Error while starting race on CU: {e}")
 
@@ -174,6 +167,7 @@ class CarreraMqttBridge:
     def publish(self, topic: str, payload: dict, qos: int = 1, retain: bool = False):
         data = json.dumps(payload, separators=(",", ":"))
         result = self.mqtt.publish(topic, data, qos=qos, retain=retain)
+        logging.info(f"resultMQTT: {result}")
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             logging.warning(f"MQTT publish failed topic={topic} rc={result.rc}")
 
@@ -186,26 +180,13 @@ class CarreraMqttBridge:
         t.sector:   1 = Start/Ziel, 2 = Check-Lane (Annahme: 2 Sektoren)
         """
         addr = t.address
-
-        # IGNORE Pace Car (6) & Ghost Car (7)
+        # IGNORE Pace Car (7) & Ghost Car (6)
         if addr >= 6:
             return
 
         sector = t.sector
         cu_ts = t.timestamp
         wall_ts = int(time.time() * 1000)
-
-        # Raw Event publishen (Debug)
-        self.publish(
-            TOPIC_RAW,
-            {
-                "controllerAddress": addr,
-                "sector": sector,
-                "cuTimestampMs": cu_ts,
-                "wallClockTs": wall_ts,
-                "sessionId": self.current_session_id,
-            },
-        )
 
         # Init-State für diese Adresse
         if addr not in self.last_s1_ts:
@@ -224,6 +205,8 @@ class CarreraMqttBridge:
             prev_s1 = self.last_s1_ts[addr]
             prev_s2 = self.last_s2_ts[addr]
 
+            logging.info(f"s1={prev_s1}, s2={prev_s2}"),
+
             # Für die allererste Überfahrt über Start/Ziel haben wir keine Runde
             if prev_s1 is not None and prev_s2 is not None and prev_s2 > prev_s1:
                 s1_time = prev_s2 - prev_s1
@@ -232,6 +215,8 @@ class CarreraMqttBridge:
 
                 self.lap_counter[addr] += 1
                 lap_nr = self.lap_counter[addr]
+
+                logging.info("in publish of code")
 
                 payload = {
                     "eventType": "lap",
@@ -246,10 +231,13 @@ class CarreraMqttBridge:
                     "cuTimestampMs": cu_ts,
                     "wallClockTs": wall_ts,
                 }
+                
+                logging.info(f"published: {payload}")
 
                 # Wenn du willst, dass NUR mit aktiver Session publisht wird:
                 # if self.current_session_id is not None:
                 #     self.publish(TOPIC_LAP, payload)
+                logging.info(f"session_id: {self.current_session_id}")
 
                 self.publish(TOPIC_LAP, payload)
 
@@ -267,7 +255,6 @@ class CarreraMqttBridge:
         logging.debug(f"Ignoring sector {sector} for addr={addr}")
 
     # ---------------------------------------------------------------------
-
     def run(self):
         if self.cu is None:
             self.connect_cu()
@@ -275,8 +262,42 @@ class CarreraMqttBridge:
         logging.info("Starting CU → MQTT Lap bridge loop")
         try:
             while True:
-                msg = self.cu.poll()
+                try:
+                    msg = self.cu.poll()
+                except CuTimeoutError as e:
+                    logging.error(f"CU poll timeout (BLE): {e} – trying to reconnect")
+                    # Bestehende CU-Verbindung sauber schließen
+                    try:
+                        if self.cu is not None:
+                            self.cu.close()
+                    except Exception as close_err:
+                        logging.warning(f"Error while closing CU after timeout: {close_err}")
+                    # Neu verbinden versuchen
+                    self.cu = None
+                    time.sleep(1.0)
+                    try:
+                        self.connect_cu()
+                        logging.info("Reconnected to CU after timeout")
+                    except Exception as reconnect_err:
+                        logging.error(f"Reconnecting to CU failed: {reconnect_err}")
+                        # Wenn Reconnect scheitert, kurze Pause und nächste Poll-Runde
+                        time.sleep(2.0)
+                    continue
+
+                if msg is None:
+                    # Nichts Neues, kurz schlafen (optional)
+                    time.sleep(0.01)
+                    continue
+
+                # 🧠 Debug: Zeig mir ALLES, was kommt
+                if hasattr(msg, "address") and hasattr(msg, "sector") and hasattr(msg, "timestamp"):
+                    logging.info("CU RAW: %r (%s)", msg, type(msg))
+                    logging.info(isinstance(msg, ControlUnit.Timer))
+
+
+                # Wenn es ein Timer ist → handle_timer_event
                 if isinstance(msg, ControlUnit.Timer):
+                    logging.info("timer")
                     self.handle_timer_event(msg)
         except KeyboardInterrupt:
             logging.info("KeyboardInterrupt - shutting down bridge ...")
