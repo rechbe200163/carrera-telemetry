@@ -99,6 +99,8 @@ export class LapEventsConsumer implements OnModuleInit {
 
     const eventType: 'lap' | 'sector' = payload.eventType ?? 'lap';
 
+    console.log(eventType);
+
     // ---------------- SECTOR-Event -> nur Live-Update ----------------
     if (eventType === 'sector') {
       const sectorPayload = payload as SectorPayload;

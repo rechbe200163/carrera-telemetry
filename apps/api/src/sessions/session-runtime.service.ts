@@ -251,6 +251,7 @@ export class SessionRuntimeService {
     // initialer Snapshot (kann am Anfang noch leer sein)
     const snap = this.buildSnapshot(sessionId);
     setTimeout(() => subject.next(snap), 0);
+    console.log('snapshot', snap);
     return subject.asObservable();
   }
 
@@ -300,6 +301,7 @@ export class SessionRuntimeService {
     const unsorted = Array.from(driversMap.values());
     const drivers = this.sortDrivers(sessionId, unsorted);
 
+    console.log({ sessionId, updatedAt: new Date().toISOString(), drivers });
     return {
       sessionId,
       updatedAt: new Date().toISOString(),
