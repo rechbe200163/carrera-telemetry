@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Circle, Clock, Flag } from 'lucide-react';
 import Link from 'next/link';
-import { Sessions } from '@/lib/types';
+import { SessionEntries, Sessions } from '@/lib/types';
 
 type DriverRuntimeState = {
   driverId: number;
@@ -70,7 +70,13 @@ function formatGap(ms: number | null | undefined): string {
   return `${sign}${formatLapTime(Math.abs(ms))}`;
 }
 
-export default function LiveTimingComonent({ session }: { session: Sessions }) {
+export default function LiveTimingComonent({
+  session,
+  sessionEntries,
+}: {
+  session: Sessions;
+  sessionEntries: SessionEntries[];
+}) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [snapshot, setSnapshot] = useState<SessionRuntimeSnapshot | null>(null);
@@ -106,7 +112,7 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
 
     es.onerror = (err) => {
       console.error('SSE error', err);
-      es.close();
+      // not closing connection on purpose
     };
 
     return () => {
@@ -128,9 +134,7 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
   const liveDriverData: LiveDriverRow[] = useMemo(() => {
     if (!snapshot) return [];
 
-    // Wir probieren, Fahrerinfos aus session.session_entries zu holen
-    // und matchen über driverId oder controllerAddress
-    const entries = (session as any).session_entries ?? [];
+    const entries = sessionEntries ?? [];
 
     return snapshot.drivers.map((d, index) => {
       const entry =
@@ -140,23 +144,38 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
             e.controller_address === d.controllerAddress
         ) ?? null;
 
-      const driverInfo = entry?.driver ?? {};
+      // Driver-Objekt aus dem Eintrag holen
+      // Passen wir etwas defensiv an, falls dein Typ anders heißt
+      const driverInfo =
+        (entry as any)?.driver ??
+        (entry as any)?.drivers ??
+        (entry as any) ??
+        {};
+
+      const rawName =
+        driverInfo.name ??
+        ([driverInfo.first_name, driverInfo.last_name]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+          '');
 
       const code =
         driverInfo.code ??
-        (driverInfo.name
-          ? driverInfo.name
+        (rawName
+          ? rawName
               .split(' ')
               .map((p: string) => p[0])
               .join('')
               .toUpperCase()
           : `D${d.driverId}`);
-      const name = driverInfo.name ?? `Driver ${d.driverId}`;
+
+      const name = rawName || `Driver ${d.driverId}`;
       const teamColor = driverInfo.team_color ?? '#ffffff';
 
       return {
         id: `${d.driverId}-${d.controllerAddress}`,
-        position: index + 1, // Snapshot kommt schon sortiert aus dem Backend
+        position: index + 1, // vom Backend sortiert
         lastLapTime: d.lastLapMs,
         bestLapTime: d.bestLapMs,
         s1Time: d.sector1Ms,
@@ -170,8 +189,7 @@ export default function LiveTimingComonent({ session }: { session: Sessions }) {
         },
       };
     });
-  }, [snapshot, session]);
-
+  }, [snapshot, sessionEntries]);
   const leader = liveDriverData[0] ?? null;
 
   const fastestLap = useMemo(() => {

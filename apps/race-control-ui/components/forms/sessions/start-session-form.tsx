@@ -30,7 +30,7 @@ export function StartSessionForm({
     if (formState.success) {
       router.push(`/sessions/${sessionId}/live`);
     }
-  });
+  }, [formState]);
 
   const isRace = sessionType === 'RACE';
 

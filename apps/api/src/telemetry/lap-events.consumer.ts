@@ -99,6 +99,8 @@ export class LapEventsConsumer implements OnModuleInit {
 
     const eventType: 'lap' | 'sector' = payload.eventType ?? 'lap';
 
+    console.log(eventType);
+
     // ---------------- SECTOR-Event -> nur Live-Update ----------------
     if (eventType === 'sector') {
       const sectorPayload = payload as SectorPayload;
@@ -135,10 +137,15 @@ export class LapEventsConsumer implements OnModuleInit {
 
       console.log('payload', lapPayload);
 
-      await this.sessionRuntime.onLapPersisted(
-        this.activeSessionId,
-        lapPayload.lapNumber,
-      );
+      await this.sessionRuntime.onLapPersisted({
+        sessionId: this.activeSessionId,
+        driverId,
+        controllerAddress: lapPayload.controllerAddress,
+        lapNumber: lapPayload.lapNumber,
+        lapTimeMs: lapPayload.lapTimeMs,
+        sector1Ms: lapPayload.sectorTimes?.s1 ?? null,
+        sector2Ms: lapPayload.sectorTimes?.s2 ?? null,
+      });
 
       return;
     }

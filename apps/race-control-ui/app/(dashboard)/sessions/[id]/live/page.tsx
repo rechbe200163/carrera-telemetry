@@ -10,5 +10,7 @@ export default async function LiveTimingPage({
   const { id } = await params;
   const session = await getSessionById(Number(id));
   const sessionEntries = await getSessionEntriesBySessionId(Number(id));
-  return <LiveTimingComonent session={session} />;
+  return (
+    <LiveTimingComonent session={session} sessionEntries={sessionEntries} />
+  );
 }
