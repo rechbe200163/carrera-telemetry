@@ -22,6 +22,7 @@ export class ChampionshipsService {
   findOne(id: number) {
     return this.championshipsRepo.findOneById(id);
   }
+
   findByMettingId(meetingId: number) {
     return this.championshipsRepo.findByMettingId(meetingId);
   }
