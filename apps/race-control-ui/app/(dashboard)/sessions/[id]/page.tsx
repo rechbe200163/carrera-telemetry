@@ -140,7 +140,7 @@ export default async function SessionDetailPage({
                     <p className='font-mono text-lg'>
                       {session.session_type === 'RACE'
                         ? `${session.laps ?? '-'} Runden`
-                        : `${session.time_limit_seconds ?? '-'} Minuten`}
+                        : `${(session.time_limit_seconds && session.time_limit_seconds / 60) ?? '-'} Minuten`}
                     </p>
                   </div>
                   <Button className='w-full' asChild>

@@ -56,7 +56,9 @@ export default async function SessionsPage() {
                           </p>
                         ) : (
                           <p className='font-mono font-bold'>
-                            {session.time_limit_seconds} min
+                            {session.time_limit_seconds &&
+                              session.time_limit_seconds / 60}
+                            min
                           </p>
                         )}
                       </div>
