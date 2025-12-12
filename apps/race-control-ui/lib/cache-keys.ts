@@ -50,6 +50,9 @@ export const CACHE_KEYS = {
   sessionEntriesBySession: (sessionId: number) =>
     `session-entries-${sessionId}`,
 
+  // ---- SESSION RESULTS ----
+  sessionResultsById: (sessionId: number) => `session-results-${sessionId}`,
+
   // ---- DRIVER STANDINGS ----
   driverStandings: 'driver-standings',
   driverStanding: (id: number) => `driver-standing-${id}`,

@@ -7,6 +7,7 @@ import { getSessionResultsBySessionId } from '@/lib/api/session-resutls-api.serv
 import { getSessionById } from '@/lib/api/session-api.service';
 import { DriverBadge } from '@/components/driver-badge';
 import { LapTimeDisplay } from '@/components/lap-time-display';
+import RebuildSessionResults from '@/components/forms/session-results/RebuildSessionResults';
 
 export default async function SessionResultsPage({
   params,
@@ -18,6 +19,10 @@ export default async function SessionResultsPage({
   const sessionResults = await getSessionResultsBySessionId(Number(id));
 
   console.log(sessionResults);
+
+  if (sessionResults.length === 0) {
+    return <RebuildSessionResults sessionId={Number(id)} />;
+  }
 
   const getPodiumStyle = (position: number) => {
     switch (position) {

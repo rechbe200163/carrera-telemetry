@@ -184,7 +184,7 @@ export default async function SessionDetailPage({
                             Kontroller
                           </p>
                           <p className='font-mono font-medium'>
-                            Addresse {entry.controller_address}
+                            Addresse {entry.controller_address + 1}
                           </p>
                         </div>
                         <div className='min-w-32 text-right'>

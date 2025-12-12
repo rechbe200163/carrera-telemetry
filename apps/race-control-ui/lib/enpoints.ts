@@ -100,6 +100,7 @@ export const ENDPOINTS = {
 
   SESSION_RESULTS: {
     GET_ID: (id: number) => `/session-result/${id}`,
+    RENEW: (id: number) => `/session-result/${id}/rebuild-results`,
   },
 
   DRIVER_STANDINGS: {

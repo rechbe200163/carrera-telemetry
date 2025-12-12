@@ -14,7 +14,7 @@ export async function getSessionResultsBySessionId(
   sessionId: number
 ): Promise<SessionResults[]> {
   'use cache';
-  cacheTag(CACHE_KEYS.sessionEntriesBySession(sessionId));
+  cacheTag(CACHE_KEYS.sessionResultsById(sessionId));
 
   return apiClient.get<SessionResults[]>(
     ENDPOINTS.SESSION_RESULTS.GET_ID(sessionId)
