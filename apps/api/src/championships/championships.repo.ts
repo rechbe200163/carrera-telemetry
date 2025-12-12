@@ -16,6 +16,13 @@ export class ChampionshipsRepo {
   async findOneById(id: number): Promise<ChampionShip | null> {
     return this.prisma.championships.findUnique({
       where: { id },
+      include: {
+        meetings: {
+          select: {
+            _count: true,
+          },
+        },
+      },
     });
   }
 
