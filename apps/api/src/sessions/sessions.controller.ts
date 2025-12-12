@@ -5,14 +5,24 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Sse,
 } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { StartSessionDto } from './dto/start-session.dto';
 import { ApiBody } from '@nestjs/swagger';
+import { Observable } from 'rxjs';
+import {
+  SessionEvent,
+  SessionsEventsService,
+  SseEvent,
+} from './sessions-events.service';
 
 @Controller('sessions')
 export class SessionsController {
-  constructor(private readonly sessionsService: SessionsService) {}
+  constructor(
+    private readonly sessionsService: SessionsService,
+    private readonly events: SessionsEventsService,
+  ) {}
 
   @ApiBody({
     type: StartSessionDto,
@@ -43,5 +53,10 @@ export class SessionsController {
   @Get('/meeting/:id')
   findByChampionshipId(@Param('id', ParseIntPipe) id: number) {
     return this.sessionsService.findByMeetingId(id);
+  }
+
+  @Sse('events')
+  sse(): Observable<SseEvent<SessionEvent>> {
+    return this.events.events$;
   }
 }

@@ -6,6 +6,7 @@ import { PrismaService } from 'src/prisma.service';
 import { MqttModule } from 'src/mqtt/mqtt.module';
 import { SessionRuntimeService } from './session-runtime.service';
 import { SessionResultModule } from 'src/session-result/session-result.module';
+import { SessionsEventsService } from './sessions-events.service';
 
 @Module({
   imports: [MqttModule, forwardRef(() => SessionResultModule)],
@@ -15,6 +16,7 @@ import { SessionResultModule } from 'src/session-result/session-result.module';
     SessionsRepo,
     SessionRuntimeService,
     PrismaService,
+    SessionsEventsService,
   ],
   exports: [SessionsRepo, SessionRuntimeService],
 })

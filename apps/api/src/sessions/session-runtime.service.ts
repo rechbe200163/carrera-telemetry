@@ -5,6 +5,7 @@ import { MqttService } from 'src/mqtt/mqtt.service';
 import { SessionType } from 'generated/prisma/enums';
 import { SessionResultsService } from 'src/session-result/session-result.service';
 import { Observable, Subject } from 'rxjs';
+import { SessionsEventsService } from './sessions-events.service';
 
 // --- Runtime-Typen für Live-UI ---
 
@@ -60,6 +61,7 @@ export class SessionRuntimeService {
     private readonly sessionsRepo: SessionsRepo,
     private readonly sessionResultsService: SessionResultsService,
     private readonly mqtt: MqttService,
+    private readonly events: SessionsEventsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -111,6 +113,15 @@ export class SessionRuntimeService {
    */
   async finishSession(sessionId: number): Promise<void> {
     // 1) Session in DB schließen
+    this.events.emit({
+      type: 'session_stop',
+      payload: {
+        sessionId,
+        reason: 'finished',
+        stoppedAt: new Date().toISOString(),
+      },
+    });
+
     await this.sessionsRepo.finishSession(sessionId);
 
     // 2) Ergebnisse berechnen
