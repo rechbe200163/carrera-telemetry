@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SessionsRepo } from 'src/sessions/sessions.repo';
 import { SessionType } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma.service';
+import { CreateSessionResultDto } from './dto/create-session-result.dto';
 
 @Injectable()
 export class SessionResultsRebuildService {
@@ -60,12 +61,20 @@ export class SessionResultsRebuildService {
     }
 
     // Build sorted results exakt wie calculateSessionResults
-    const sorted = Array.from(byDriver.values())
+    const sorted: CreateSessionResultDto[] = Array.from(byDriver.values())
       .sort((a, b) => {
-        if (b.lapsCompleted !== a.lapsCompleted) {
-          return b.lapsCompleted - a.lapsCompleted;
+        if (session.session_type === SessionType.RACE) {
+          // RACE: mehr Runden gewinnt, bei Gleichstand weniger Gesamtzeit
+          if (b.lapsCompleted !== a.lapsCompleted) {
+            return b.lapsCompleted - a.lapsCompleted;
+          }
+          return a.totalMs - b.totalMs;
         }
-        return a.totalMs - b.totalMs;
+
+        // QUALI / PRACTICE / FUN: beste Runde gewinnt (nulls last)
+        const aBest = a.bestLapMs ?? Number.POSITIVE_INFINITY;
+        const bBest = b.bestLapMs ?? Number.POSITIVE_INFINITY;
+        return aBest - bBest;
       })
       .map((agg, index) => {
         const avg =
@@ -73,6 +82,7 @@ export class SessionResultsRebuildService {
             ? Math.round(agg.totalMs / agg.lapsCompleted)
             : null;
 
+        const isRace = session.session_type === SessionType.RACE;
         const basePoints = this.getPointsForPosition(index + 1, isRace);
 
         return {
@@ -82,7 +92,7 @@ export class SessionResultsRebuildService {
           laps_completed: agg.lapsCompleted,
           best_lap_ms: agg.bestLapMs,
           avg_lap_ms: avg,
-          total_time_ms: agg.totalMs, // Pflichtfeld
+          total_time_ms: agg.totalMs,
           points_base: basePoints,
           points_fastest_lap: 0,
           points_total: basePoints,
