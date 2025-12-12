@@ -120,7 +120,7 @@ export function AddSessionEntryForm({
                             <Gamepad2 className={`h-6 w-6 ${color}`} />
                           </span>
                         )}
-                        <span>Addresse {controller.address}</span>
+                        <span>Addresse {controller.address + 1}</span>
                         {controller.name && (
                           <span className='text-muted-foreground text-xs'>
                             ({controller.name})
