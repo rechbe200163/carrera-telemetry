@@ -5,11 +5,17 @@ import { SessionResultsRepo } from './session-result.repo';
 import { PrismaService } from 'src/prisma.service';
 import { LapsModule } from 'src/laps/laps.module';
 import { SessionsModule } from 'src/sessions/sessions.module';
+import { SessionResultsRebuildService } from './session-result-rebuild-service';
 
 @Module({
   imports: [LapsModule, forwardRef(() => SessionsModule)],
   controllers: [SessionResultController],
-  providers: [SessionResultsService, SessionResultsRepo, PrismaService],
+  providers: [
+    SessionResultsService,
+    SessionResultsRepo,
+    SessionResultsRebuildService,
+    PrismaService,
+  ],
   exports: [SessionResultsService],
 })
 export class SessionResultModule {}

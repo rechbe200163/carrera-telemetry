@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'nestjs-prisma';
 import { SessionsRepo } from 'src/sessions/sessions.repo';
 import { SessionType } from 'generated/prisma/enums';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class SessionResultsRebuildService {
