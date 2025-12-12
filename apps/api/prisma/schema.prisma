@@ -85,6 +85,9 @@ model drivers {
   session_entries  session_entries[]
   session_results  session_results[]
 
+  driver_session_stats driver_session_stats[]
+  driver_daily_stats   driver_daily_stats[]
+
   @@index([code], map: "idx_drivers_code")
   @@index([last_name], map: "idx_drivers_name")
   @@schema("race_control")
@@ -183,7 +186,123 @@ model sessions {
   laps               laps[]
   session_entries    session_entries[]
   session_results    session_results[]
-  meetings           meetings          @relation(fields: [meeting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sessions_meeting")
 
+  driver_session_stats driver_session_stats[]
+  session_stats        session_stats?
+
+  meetings meetings @relation(fields: [meeting_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sessions_meeting")
+
+  @@schema("race_control")
+}
+
+/// ==============================
+/// STATS TABLES (computed nightly)
+/// ==============================
+
+model driver_session_stats {
+  id Int @id @default(autoincrement())
+
+  // keys
+  session_id Int
+  driver_id  Int
+
+  // counts
+  laps_total   Int @default(0)
+  laps_valid   Int @default(0)
+  laps_invalid Int @default(0)
+
+  // lap pace
+  best_lap_ms   Int?
+  avg_lap_ms    Int?
+  median_lap_ms Int?
+  p90_lap_ms    Int? // optional, aber geil für "typisches Maximum"
+  stddev_lap_ms Float? // Konstanz
+
+  // sectors
+  best_s1_ms Int?
+  best_s2_ms Int?
+  best_s3_ms Int?
+
+  avg_s1_ms Int?
+  avg_s2_ms Int?
+  avg_s3_ms Int?
+
+  stddev_s1_ms Float?
+  stddev_s2_ms Float?
+  stddev_s3_ms Float?
+
+  // theoretical best (sum best sectors if present)
+  theoretical_best_ms Int?
+
+  // meta
+  computed_at DateTime @default(now()) @db.Timestamp(6)
+
+  // relations
+  drivers  drivers  @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dss_driver")
+  sessions sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dss_session")
+
+  @@unique([session_id, driver_id], map: "uq_dss_session_driver")
+  @@index([driver_id, computed_at(sort: Desc)], map: "idx_dss_driver_computed_desc")
+  @@index([session_id], map: "idx_dss_session")
+  @@schema("race_control")
+}
+
+model session_stats {
+  id Int @id @default(autoincrement())
+
+  session_id Int @unique(map: "uq_ss_session")
+
+  // totals across all drivers
+  laps_total   Int @default(0)
+  laps_valid   Int @default(0)
+  laps_invalid Int @default(0)
+
+  best_lap_ms   Int?
+  median_lap_ms Int?
+  p90_lap_ms    Int?
+  stddev_lap_ms Float?
+
+  computed_at DateTime @default(now()) @db.Timestamp(6)
+
+  sessions sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ss_session")
+
+  @@index([computed_at(sort: Desc)], map: "idx_ss_computed_desc")
+  @@schema("race_control")
+}
+
+/// OPTIONAL (wenn du Profile/Rankings über Zeit willst):
+/// tägliche Aggregation pro Fahrer (über alle Sessions/Laps eines Tages)
+model driver_daily_stats {
+  id Int @id @default(autoincrement())
+
+  driver_id Int
+  day       DateTime @db.Date
+
+  laps_total   Int @default(0)
+  laps_valid   Int @default(0)
+  laps_invalid Int @default(0)
+
+  best_lap_ms   Int?
+  avg_lap_ms    Int?
+  median_lap_ms Int?
+  p90_lap_ms    Int?
+  stddev_lap_ms Float?
+
+  best_s1_ms Int?
+  best_s2_ms Int?
+  best_s3_ms Int?
+
+  avg_s1_ms Int?
+  avg_s2_ms Int?
+  avg_s3_ms Int?
+
+  theoretical_best_ms Int?
+
+  computed_at DateTime @default(now()) @db.Timestamp(6)
+
+  drivers drivers @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dds_driver")
+
+  @@unique([driver_id, day], map: "uq_dds_driver_day")
+  @@index([day(sort: Desc)], map: "idx_dds_day_desc")
   @@schema("race_control")
 }

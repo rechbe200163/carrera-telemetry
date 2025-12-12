@@ -14,6 +14,7 @@ import { SessionEntryModule } from './session-entry/session-entry.module';
 import { SessionResultModule } from './session-result/session-result.module';
 import { DriverStandingsModule } from './driver-standings/driver-standings.module';
 import { LiveModule } from './live/live.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { LiveModule } from './live/live.module';
     SessionResultModule,
     DriverStandingsModule,
     LiveModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

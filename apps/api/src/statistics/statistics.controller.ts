@@ -1,0 +1,72 @@
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { StatisticsService } from './statistics.service';
+
+@Controller('statistics')
+export class StatisticsController {
+  constructor(private readonly statisticsService: StatisticsService) {}
+
+  // =========================
+  // DRIVER SESSION STATS
+  // =========================
+
+  // GET /statistics/sessions/:sessionId/drivers
+  @Get('sessions/:sessionId/drivers')
+  getDriverSessionStats(@Param('sessionId') sessionId: string) {
+    return this.statisticsService.getDriverSessionStats(+sessionId);
+  }
+
+  // GET /statistics/drivers/:driverId/sessions?limit=50
+  @Get('drivers/:driverId/sessions')
+  getDriverSessionStatsForDriver(
+    @Param('driverId') driverId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.statisticsService.getDriverSessionStatsForDriver(
+      +driverId,
+      limit ? +limit : 50,
+    );
+  }
+
+  // =========================
+  // SESSION STATS
+  // =========================
+
+  // GET /statistics/sessions/:sessionId
+  @Get('sessions/:sessionId')
+  getSessionStats(@Param('sessionId') sessionId: string) {
+    return this.statisticsService.getSessionStats(+sessionId);
+  }
+
+  // =========================
+  // DRIVER DAILY STATS
+  // =========================
+
+  // GET /statistics/drivers/:driverId/daily?days=30
+  @Get('drivers/:driverId/daily')
+  getDriverDailyStats(
+    @Param('driverId') driverId: string,
+    @Query('days') days?: string,
+  ) {
+    return this.statisticsService.getDriverDailyStats(
+      +driverId,
+      days ? +days : 30,
+    );
+  }
+
+  // GET /statistics/daily/:day (YYYY-MM-DD)
+  @Get('daily/:day')
+  getDriverDailyStatsForDay(@Param('day') day: string) {
+    return this.statisticsService.getDriverDailyStatsForDay(day);
+  }
+
+  // =========================
+  // MAINTENANCE
+  // =========================
+
+  // POST /statistics/rebuild
+  // Manuelles Triggern der Nightly Aggregation
+  @Post('rebuild')
+  rebuildStatistics() {
+    return this.statisticsService.rebuildAll();
+  }
+}
