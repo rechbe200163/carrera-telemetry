@@ -1,12 +1,26 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { SessionResultsService } from './session-result.service';
+import { SessionResultsRebuildService } from './session-result-rebuild-service';
 
 @Controller('session-result')
 export class SessionResultController {
-  constructor(private readonly sessionResultService: SessionResultsService) {}
+  constructor(
+    private readonly sessionResultService: SessionResultsService,
+    private readonly rebuildService: SessionResultsRebuildService,
+  ) {}
 
   @Get(':id')
   getResultsBySessionId(@Param('id', ParseIntPipe) id: number) {
     return this.sessionResultService.getResultsBySessionId(id);
+  }
+  @Post(':id/rebuild-results')
+  async rebuild(@Param('id', ParseIntPipe) id: number) {
+    await this.rebuildService.rebuild(id);
+
+    return {
+      ok: true,
+      session_id: id,
+      message: 'Session results rebuilt from laps',
+    };
   }
 }
