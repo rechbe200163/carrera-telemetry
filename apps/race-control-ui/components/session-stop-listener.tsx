@@ -16,6 +16,8 @@ export function SessionStopListener() {
     const url = `${baseUrl}/sessions/events`;
     const es = new EventSource(url);
 
+    console.log(es.readyState);
+
     es.onmessage = (msg) => {
       const parsed = JSON.parse(msg.data) as {
         type: string;
