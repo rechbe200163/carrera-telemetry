@@ -18,7 +18,7 @@ export default function layout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant='floating' collapsible='icon' />
+      <AppSidebar variant='floating' collapsible='offcanvas' />
       <SidebarInset>
         <SiteHeader />
         {children}
