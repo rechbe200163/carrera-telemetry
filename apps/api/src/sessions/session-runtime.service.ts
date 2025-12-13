@@ -25,6 +25,10 @@ export type DriverRuntimeState = {
 export type SessionRuntimeSnapshot = {
   sessionId: number;
   updatedAt: string;
+
+  startedAt: string | null; // <-- NEU
+  timeLimitSeconds: number | null; // <-- NEU (für Practice/Qualy/Fun)
+
   drivers: DriverRuntimeState[];
 };
 
@@ -57,6 +61,8 @@ export class SessionRuntimeService {
     Subject<SessionRuntimeSnapshot>
   >();
 
+  private readonly tickersBySession = new Map<number, NodeJS.Timeout>();
+
   constructor(
     private readonly sessionsRepo: SessionsRepo,
     private readonly sessionResultsService: SessionResultsService,
@@ -88,6 +94,7 @@ export class SessionRuntimeService {
     };
 
     this.runtimeBySession.set(sessionId, state);
+    this.startTicker(sessionId);
 
     // initiale Live-Maps anlegen/clearen
     this.driversBySession.set(sessionId, new Map());
@@ -133,14 +140,17 @@ export class SessionRuntimeService {
       sessionId,
     });
 
+    this.stopTicker(sessionId);
+
+    const finalSnap = this.buildSnapshot(sessionId);
+
     // 4) Live-State aufräumen
     this.runtimeBySession.delete(sessionId);
     this.driversBySession.delete(sessionId);
 
     const subj = this.subjectsBySession.get(sessionId);
     if (subj) {
-      // letztes Snapshot senden, dann Stream schließen
-      subj.next(this.buildSnapshot(sessionId));
+      subj.next(finalSnap);
       subj.complete();
       this.subjectsBySession.delete(sessionId);
     }
@@ -344,10 +354,13 @@ export class SessionRuntimeService {
     const unsorted = Array.from(driversMap.values());
     const drivers = this.sortDrivers(sessionId, unsorted);
 
-    console.log({ sessionId, updatedAt: new Date().toISOString(), drivers });
+    const runtime = this.runtimeBySession.get(sessionId);
+
     return {
       sessionId,
       updatedAt: new Date().toISOString(),
+      startedAt: runtime?.startedAt ? runtime.startedAt.toISOString() : null,
+      timeLimitSeconds: runtime?.timeLimitSeconds ?? null,
       drivers,
     };
   }
@@ -414,5 +427,34 @@ export class SessionRuntimeService {
       }
       return a.driverId - b.driverId;
     });
+  }
+  private startTicker(sessionId: number) {
+    // nicht doppelt starten
+    if (this.tickersBySession.has(sessionId)) return;
+
+    const t = setInterval(async () => {
+      const state = this.runtimeBySession.get(sessionId);
+      if (!state) return;
+
+      // Zeitbasierte Sessions: auto-finish auch wenn keine Laps kommen
+      if (state.timeLimitSeconds != null) {
+        const endTs = state.startedAt.getTime() + state.timeLimitSeconds * 1000;
+        if (Date.now() >= endTs) {
+          await this.finishSession(sessionId);
+          return;
+        }
+      }
+
+      // Snapshot pushen, damit UI "tickt"
+      this.broadcastSnapshot(sessionId);
+    }, 250); // 4 Hz reicht, wirkt smooth
+
+    this.tickersBySession.set(sessionId, t);
+  }
+
+  private stopTicker(sessionId: number) {
+    const t = this.tickersBySession.get(sessionId);
+    if (t) clearInterval(t);
+    this.tickersBySession.delete(sessionId);
   }
 }
