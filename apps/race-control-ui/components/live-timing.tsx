@@ -22,6 +22,10 @@ type DriverRuntimeState = {
 type SessionRuntimeSnapshot = {
   sessionId: number;
   updatedAt: string;
+
+  startedAt: string | null;
+  timeLimitSeconds: number | null;
+
   drivers: DriverRuntimeState[];
 };
 
@@ -70,6 +74,14 @@ function formatGap(ms: number | null | undefined): string {
   return `${sign}${formatLapTime(Math.abs(ms))}`;
 }
 
+function formatCountdown(ms: number | null): string {
+  if (ms == null) return '--:--';
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export default function LiveTimingComonent({
   session,
   sessionEntries,
@@ -78,15 +90,15 @@ export default function LiveTimingComonent({
   sessionEntries: SessionEntries[];
 }) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [snapshot, setSnapshot] = useState<SessionRuntimeSnapshot | null>(null);
 
-  // Zeit hochzählen (nur UI-Cosmetics)
+  // UI Clock + local "now" (Countdown basiert auf startedAt + timeLimitSeconds)
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
+      setNowMs(Date.now());
+    }, 250);
     return () => clearInterval(interval);
   }, []);
 
@@ -112,7 +124,7 @@ export default function LiveTimingComonent({
 
     es.onerror = (err) => {
       console.error('SSE error', err);
-      // not closing connection on purpose
+      // Verbindung absichtlich offen lassen; Browser reconnectet.
     };
 
     return () => {
@@ -120,15 +132,22 @@ export default function LiveTimingComonent({
     };
   }, [session.id]);
 
-  // Elapsed Time Format (für Practice/Qualy)
-  const formattedElapsed = useMemo(() => {
-    const total = elapsedSeconds;
-    const minutes = Math.floor(total / 60);
-    const seconds = total % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds
-      .toString()
-      .padStart(2, '0')}`;
-  }, [elapsedSeconds]);
+  // Countdown für Practice/Qualy/Fun (server-startedAt + server-timeLimitSeconds)
+  const remainingMs = useMemo(() => {
+    if (session.session_type === 'RACE') return null;
+    if (!snapshot?.startedAt) return null;
+    if (snapshot.timeLimitSeconds == null) return null;
+
+    const started = Date.parse(snapshot.startedAt);
+    const durationMs = snapshot.timeLimitSeconds * 1000;
+    const elapsed = Math.max(0, nowMs - started);
+    return Math.max(0, durationMs - elapsed);
+  }, [
+    session.session_type,
+    snapshot?.startedAt,
+    snapshot?.timeLimitSeconds,
+    nowMs,
+  ]);
 
   // Mappe RuntimeSnapshot + Session-Metadaten -> UI-Row Model
   const liveDriverData: LiveDriverRow[] = useMemo(() => {
@@ -144,8 +163,6 @@ export default function LiveTimingComonent({
             e.controller_address === d.controllerAddress
         ) ?? null;
 
-      // Driver-Objekt aus dem Eintrag holen
-      // Passen wir etwas defensiv an, falls dein Typ anders heißt
       const driverInfo =
         (entry as any)?.driver ??
         (entry as any)?.drivers ??
@@ -175,7 +192,7 @@ export default function LiveTimingComonent({
 
       return {
         id: `${d.driverId}-${d.controllerAddress}`,
-        position: index + 1, // vom Backend sortiert
+        position: index + 1,
         lastLapTime: d.lastLapMs,
         bestLapTime: d.bestLapMs,
         s1Time: d.sector1Ms,
@@ -190,20 +207,18 @@ export default function LiveTimingComonent({
       };
     });
   }, [snapshot, sessionEntries]);
+
   const leader = liveDriverData[0] ?? null;
 
   const fastestLap = useMemo(() => {
     let best: number | null = null;
     for (const d of liveDriverData) {
       if (d.bestLapTime == null) continue;
-      if (best == null || d.bestLapTime < best) {
-        best = d.bestLapTime;
-      }
+      if (best == null || d.bestLapTime < best) best = d.bestLapTime;
     }
     return best ?? 0;
   }, [liveDriverData]);
 
-  // Current Lap für Header (Leader-Runden)
   const currentLapHeader = leader?.currentLap ?? 0;
 
   return (
@@ -248,7 +263,7 @@ export default function LiveTimingComonent({
             <div className='flex items-center gap-3 bg-[#1a1a1a] border border-[#333] rounded-lg px-6 py-3'>
               <Clock className='h-5 w-5 text-white/60' />
               <span className='font-mono text-4xl font-black text-white'>
-                {formattedElapsed}
+                {formatCountdown(remainingMs)}
               </span>
             </div>
           )}

@@ -5,6 +5,7 @@ import { ENDPOINTS } from '../enpoints';
 import { FormState } from '../fom.types';
 import { SessionType } from '../types';
 import { CACHE_KEYS } from '../cache-keys';
+import { redirect } from 'next/navigation';
 
 export async function startSessionAction(
   sessionId: number,
@@ -42,9 +43,13 @@ export async function startSessionAction(
     payload,
   });
 
-  updateTag(CACHE_KEYS.session(sessionId));
-  return apiClient.safePost<any, typeof payload>(
+  const resp = await apiClient.safePost<any, typeof payload>(
     ENDPOINTS.SESSIONS.START(sessionId),
     payload
   );
+  if (resp.success) {
+    updateTag(CACHE_KEYS.session(sessionId));
+    redirect(`/sessions/${sessionId}/live`);
+  }
+  return resp;
 }
