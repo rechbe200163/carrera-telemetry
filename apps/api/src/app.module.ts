@@ -15,6 +15,7 @@ import { SessionResultModule } from './session-result/session-result.module';
 import { DriverStandingsModule } from './driver-standings/driver-standings.module';
 import { LiveModule } from './live/live.module';
 import { StatisticsModule } from './statistics/statistics.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { StatisticsModule } from './statistics/statistics.module';
     DriverStandingsModule,
     LiveModule,
     StatisticsModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

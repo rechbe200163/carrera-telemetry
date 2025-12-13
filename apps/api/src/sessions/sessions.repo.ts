@@ -70,7 +70,11 @@ export class SessionsRepo {
   }
 
   async findAll() {
-    return this.prisma.sessions.findMany();
+    return this.prisma.sessions.findMany({
+      orderBy: {
+        status: 'asc',
+      },
+    });
   }
 
   async findByMeetingId(meetingId: number) {

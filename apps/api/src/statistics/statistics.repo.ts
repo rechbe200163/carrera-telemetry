@@ -57,12 +57,14 @@ export class StatisticsRepo {
             WHEN
               MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL) IS NOT NULL
               AND MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL) IS NOT NULL
-              AND MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL) IS NOT NULL
             THEN
               (
                 MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL)
                 + MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL)
-                + MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL)
+                + COALESCE(
+                    MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL),
+                    0
+                  )
               )
             ELSE NULL
           END,
@@ -167,18 +169,20 @@ export class StatisticsRepo {
           (AVG(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL))::int,
           (AVG(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL))::int,
           CASE
-            WHEN
-              MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL) IS NOT NULL
-              AND MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL) IS NOT NULL
-              AND MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL) IS NOT NULL
-            THEN
-              (
-                MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL)
-                + MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL)
-                + MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL)
-              )
-            ELSE NULL
-          END,
+          WHEN
+            MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL) IS NOT NULL
+            AND MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL) IS NOT NULL
+          THEN
+            (
+              MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL)
+              + MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL)
+              + COALESCE(
+                  MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL),
+                  0
+                )
+            )
+          ELSE NULL
+        END,
           NOW()::timestamp(6)
         FROM race_control.laps l
         GROUP BY l.driver_id, (l.date_start::date)

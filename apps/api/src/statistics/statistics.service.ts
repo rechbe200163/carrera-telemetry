@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { StatisticsRepo } from './statistics.repo';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class StatisticsService {
@@ -36,8 +35,7 @@ export class StatisticsService {
   // MAINTENANCE / CRON
   // =========================
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async rebuildAll() {
+  async aggregateStats() {
     this.logger.warn('Manual statistics rebuild triggered');
     await this.statisticsRepo.upsertAllNightly();
     return { status: 'ok', rebuiltAt: new Date().toISOString() };

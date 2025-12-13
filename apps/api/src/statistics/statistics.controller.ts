@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller('statistics')
 export class StatisticsController {
@@ -65,8 +66,9 @@ export class StatisticsController {
 
   // POST /statistics/rebuild
   // Manuelles Triggern der Nightly Aggregation
-  @Post('rebuild')
-  rebuildStatistics() {
-    return this.statisticsService.rebuildAll();
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  aggregateStats() {
+    console.log('now ist 10 am');
+    return this.statisticsService.aggregateStats();
   }
 }
