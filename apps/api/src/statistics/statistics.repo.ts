@@ -205,6 +205,92 @@ export class StatisticsRepo {
           theoretical_best_ms = EXCLUDED.theoretical_best_ms,
           computed_at         = EXCLUDED.computed_at;
       `;
+
+      await tx.$executeRaw`
+      INSERT INTO race_control.driver_all_time_stats (
+      driver_id,
+      laps_total, laps_valid, laps_invalid,
+      best_lap_ms, avg_lap_ms, median_lap_ms, p90_lap_ms, stddev_lap_ms,
+      best_s1_ms, best_s2_ms, best_s3_ms,
+      avg_s1_ms, avg_s2_ms, avg_s3_ms,
+      stddev_s1_ms, stddev_s2_ms, stddev_s3_ms,
+      theoretical_best_ms,
+      first_lap_at, last_lap_at,
+      computed_at
+    )
+    SELECT
+      l.driver_id,
+
+      COUNT(*)::int,
+      COUNT(*) FILTER (WHERE l.is_valid)::int,
+      COUNT(*) FILTER (WHERE NOT l.is_valid)::int,
+
+      MIN(l.lap_duration_ms) FILTER (WHERE l.is_valid),
+      (AVG(l.lap_duration_ms) FILTER (WHERE l.is_valid))::int,
+      (PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY l.lap_duration_ms) FILTER (WHERE l.is_valid))::int,
+      (PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY l.lap_duration_ms) FILTER (WHERE l.is_valid))::int,
+      STDDEV_POP(l.lap_duration_ms) FILTER (WHERE l.is_valid),
+
+      MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL),
+      MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL),
+      MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL),
+
+      (AVG(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL))::int,
+      (AVG(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL))::int,
+      (AVG(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL))::int,
+
+      STDDEV_POP(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL),
+      STDDEV_POP(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL),
+      STDDEV_POP(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL),
+
+      CASE
+        WHEN
+          MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL) IS NOT NULL
+          AND MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL) IS NOT NULL
+        THEN
+          (
+            MIN(l.duration_sector1) FILTER (WHERE l.is_valid AND l.duration_sector1 IS NOT NULL)
+            + MIN(l.duration_sector2) FILTER (WHERE l.is_valid AND l.duration_sector2 IS NOT NULL)
+            + COALESCE(
+                MIN(l.duration_sector3) FILTER (WHERE l.is_valid AND l.duration_sector3 IS NOT NULL),
+                0
+              )
+          )
+        ELSE NULL
+      END,
+
+      MIN(l.date_start),
+      MAX(l.date_start),
+
+      NOW()::timestamp(6)
+    FROM race_control.laps l
+    GROUP BY l.driver_id
+    ON CONFLICT (driver_id)
+    DO UPDATE SET
+      laps_total          = EXCLUDED.laps_total,
+      laps_valid          = EXCLUDED.laps_valid,
+      laps_invalid        = EXCLUDED.laps_invalid,
+      best_lap_ms         = EXCLUDED.best_lap_ms,
+      avg_lap_ms          = EXCLUDED.avg_lap_ms,
+      median_lap_ms       = EXCLUDED.median_lap_ms,
+      p90_lap_ms          = EXCLUDED.p90_lap_ms,
+      stddev_lap_ms       = EXCLUDED.stddev_lap_ms,
+
+      best_s1_ms          = EXCLUDED.best_s1_ms,
+      best_s2_ms          = EXCLUDED.best_s2_ms,
+      best_s3_ms          = EXCLUDED.best_s3_ms,
+      avg_s1_ms           = EXCLUDED.avg_s1_ms,
+      avg_s2_ms           = EXCLUDED.avg_s2_ms,
+      avg_s3_ms           = EXCLUDED.avg_s3_ms,
+      stddev_s1_ms        = EXCLUDED.stddev_s1_ms,
+      stddev_s2_ms        = EXCLUDED.stddev_s2_ms,
+      stddev_s3_ms        = EXCLUDED.stddev_s3_ms,
+
+      theoretical_best_ms = EXCLUDED.theoretical_best_ms,
+      first_lap_at        = LEAST(race_control.driver_all_time_stats.first_lap_at, EXCLUDED.first_lap_at),
+      last_lap_at         = GREATEST(race_control.driver_all_time_stats.last_lap_at, EXCLUDED.last_lap_at),
+      computed_at         = EXCLUDED.computed_at;
+      `;
     });
   }
 

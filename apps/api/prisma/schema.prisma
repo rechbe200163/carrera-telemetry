@@ -87,6 +87,7 @@ model drivers {
 
   driver_session_stats driver_session_stats[]
   driver_daily_stats   driver_daily_stats[]
+  driverAllTimeStats   driver_all_time_stats?
 
   @@index([code], map: "idx_drivers_code")
   @@index([last_name], map: "idx_drivers_name")
@@ -304,5 +305,48 @@ model driver_daily_stats {
 
   @@unique([driver_id, day], map: "uq_dds_driver_day")
   @@index([day(sort: Desc)], map: "idx_dds_day_desc")
+  @@schema("race_control")
+}
+
+model driver_all_time_stats {
+  id Int @id @default(autoincrement())
+
+  driver_id Int @unique(map: "uq_dats_driver")
+
+  // counts
+  laps_total   Int @default(0)
+  laps_valid   Int @default(0)
+  laps_invalid Int @default(0)
+
+  // lap pace
+  best_lap_ms   Int?
+  avg_lap_ms    Int?
+  median_lap_ms Int?
+  p90_lap_ms    Int?
+  stddev_lap_ms Float?
+
+  // sectors (optional)
+  best_s1_ms Int?
+  best_s2_ms Int?
+  best_s3_ms Int?
+
+  avg_s1_ms Int?
+  avg_s2_ms Int?
+  avg_s3_ms Int?
+
+  stddev_s1_ms Float?
+  stddev_s2_ms Float?
+  stddev_s3_ms Float?
+
+  theoretical_best_ms Int?
+
+  // meta
+  first_lap_at DateTime? @db.Timestamp(6)
+  last_lap_at  DateTime? @db.Timestamp(6)
+  computed_at  DateTime  @default(now()) @db.Timestamp(6)
+
+  drivers drivers @relation(fields: [driver_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_dats_driver")
+
+  @@index([computed_at(sort: Desc)], map: "idx_dats_computed_desc")
   @@schema("race_control")
 }
