@@ -87,7 +87,9 @@ export default async function MeetingDetailPage({
                       <div className='rounded-lg bg-secondary/50 p-3'>
                         <p className='text-xs text-muted-foreground'>Dauer</p>
                         <p className='text-xl font-bold font-mono'>
-                          {session.time_limit_seconds || '-'}
+                          {(session.time_limit_seconds &&
+                            session.time_limit_seconds / 60) ||
+                            '-'}
                         </p>
                       </div>
                     )}
