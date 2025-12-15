@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateLapDto } from './dto/create-lap.dto';
 import { Lap } from './entities/lap.entity';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class LapsRepo {
@@ -16,17 +17,24 @@ export class LapsRepo {
     return this.prisma.laps.createMany({ data });
   }
 
-  async findBySession(sessionId: number): Promise<Lap[]> {
+  async findBySession<
+    TSelect extends Prisma.lapsSelect | undefined = undefined,
+  >(
+    sessionId: number,
+    select?: TSelect,
+  ): Promise<
+    TSelect extends undefined
+      ? Lap[]
+      : Prisma.lapsGetPayload<{ select: TSelect }>[]
+  > {
     return this.prisma.laps.findMany({
       where: { session_id: sessionId },
       orderBy: [{ lap_number: 'asc' }],
-    });
+      ...(select ? { select } : {}),
+    }) as any;
   }
 
-  async findBySessionAndDriver(
-    sessionId: number,
-    driverId: number,
-  ): Promise<Lap[]> {
+  async findBySessionAndDriver(sessionId: number, driverId: number) {
     return this.prisma.laps.findMany({
       where: {
         session_id: sessionId,
