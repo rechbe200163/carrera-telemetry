@@ -19,8 +19,6 @@ export default async function ChampionshipDetailPage({
   const meetings = await getMeetingsByChampionshipId(Number(id));
   const driverStandings = await getDriverStandingsByChampionship(Number(id));
 
-  console.log();
-
   return (
     <div className='flex flex-col'>
       <div className='p-6 space-y-6'>
