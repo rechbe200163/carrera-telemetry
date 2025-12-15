@@ -10,15 +10,31 @@ export class SessionEntriesRepo {
     return this.prisma.session_entries.create({ data });
   }
 
-  async listEntriesForSession(
-    sessionId: number,
-  ): Promise<CreateSessionEntryDto[]> {
+  async listEntriesForSession(sessionId: number) {
     const entries = await this.prisma.session_entries.findMany({
       where: { session_id: sessionId },
       orderBy: [{ controller_address: 'asc' }],
       include: {
         drivers: true,
       },
+    });
+    return entries;
+  }
+  async listEntriesForSessionStats(sessionId: number) {
+    const entries = await this.prisma.session_entries.findMany({
+      where: { session_id: sessionId },
+      include: {
+        drivers: {
+          select: {
+            id: true,
+            code: true,
+            color: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
+      orderBy: { driver_id: 'asc' },
     });
     return entries;
   }
