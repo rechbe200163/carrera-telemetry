@@ -26,15 +26,6 @@ export const ENDPOINTS = {
     DELETE: (id: number) => `/cars/${id}`,
   },
 
-  // --- Tracks ---
-  TRACKS: {
-    POST: '/tracks',
-    GET: '/tracks',
-    GET_ID: (id: number) => `/tracks/${id}`,
-    PATCH: (id: number) => `/tracks/${id}`,
-    DELETE: (id: number) => `/tracks/${id}`,
-  },
-
   // --- Championships ---
   CHAMPIONSHIPS: {
     POST: '/championships',
@@ -123,6 +114,10 @@ export const ENDPOINTS = {
     DELETE: (id: number) => `/meetings/${id}`,
     GET_BY_CHAMPIONSHIP_ID: (championsshipId: number) =>
       `/meetings/championships/${championsshipId}/meetings`,
+  },
+  STATISTICS: {
+    GET_LAPS_FOR_ALL_DRIVERS_BY_SESSION: (sessionId: number) =>
+      `/statistics/sessions/${sessionId}/laps-comparison`,
   },
 } as const;
 
