@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   CartesianGrid,
   Legend,
-  Line,
   ReferenceLine,
   Scatter,
   ScatterChart,
@@ -36,48 +35,20 @@ type Props = {
   sessionName?: string;
 };
 
-const toNum = (v: unknown) => {
+const num = (v: unknown) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
+const fmt = (ms: unknown) => {
+  const n = num(ms);
+  return n == null ? '—' : `${(n / 1000).toFixed(3)}s`;
+};
 
-function formatSeconds(ms: number) {
-  return `${(ms / 1000).toFixed(3)} s`;
-}
-
-function hoverLineData(y: number, xMax: number, label: string, color: string) {
-  return [
-    { x: 0, y, __type: 'refline', label, color },
-    { x: xMax, y, __type: 'refline', label, color },
-  ];
-}
-
-// Tooltip: kann Punkte UND Linien
 function LapsTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
-
   const p = payload[0]?.payload;
   if (!p) return null;
 
-  // Hover auf Referenzlinie (AVG/TB/P90)
-  if (p.__type === 'refline') {
-    return (
-      <div className='rounded-lg border bg-background px-3 py-2 shadow-sm'>
-        <div className='flex items-center gap-2 font-medium'>
-          <span
-            className='h-2.5 w-2.5 rounded-full'
-            style={{ background: p.color }}
-          />
-          <span>{p.label}</span>
-        </div>
-        <div className='mt-1 text-xs text-muted-foreground'>
-          {formatSeconds(p.y)}
-        </div>
-      </div>
-    );
-  }
-
-  // normaler Punkt
   return (
     <div className='rounded-lg border bg-background px-3 py-2 shadow-sm'>
       <div className='flex items-center gap-2 font-medium'>
@@ -88,14 +59,12 @@ function LapsTooltip({ active, payload }: any) {
         <span>{p.driverName}</span>
       </div>
       <div className='mt-1 text-xs text-muted-foreground'>
-        Runde {p.x} · {formatSeconds(p.realY ?? p.y)}{' '}
-        {p.isCapped ? '(Ausreißer)' : ''}
+        Runde {p.x} · {fmt(p.realY ?? p.y)} {p.isCapped ? '(Ausreißer)' : ''}
       </div>
     </div>
   );
 }
 
-// Punktform: Outlier = Dreieck, sonst Kreis
 const PointShape = (props: any) => {
   const { cx, cy, payload, fill } = props;
   if (cx == null || cy == null) return null;
@@ -108,15 +77,113 @@ const PointShape = (props: any) => {
       />
     );
   }
-
   return <circle cx={cx} cy={cy} r={4} fill={fill} />;
 };
 
+function ChartKeyRow({
+  sessionP90,
+  cap,
+}: {
+  sessionP90: number | null;
+  cap: number | null;
+}) {
+  return (
+    <div className='flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground'>
+      <span className='inline-flex items-center gap-2'>
+        <span className='h-2 w-2 rounded-full bg-muted-foreground' />
+        Runde
+      </span>
+
+      <span className='inline-flex items-center gap-2'>
+        <span className='inline-block h-0 w-0 border-x-[6px] border-x-transparent border-b-[10px] border-b-muted-foreground' />
+        Ausreißer (gecappt)
+      </span>
+
+      <span className='inline-flex items-center gap-2'>
+        <span
+          className='h-[2px] w-8 bg-muted-foreground opacity-60'
+          style={{ borderTop: '2px dashed' }}
+        />
+        Session P90
+      </span>
+
+      <span className='ml-auto inline-flex items-center gap-3'>
+        <span>
+          P90:{' '}
+          <span className='font-mono text-foreground'>{fmt(sessionP90)}</span>
+        </span>
+        <span>
+          Cap: <span className='font-mono text-foreground'>{fmt(cap)}</span>
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function CustomLegend({
+  seriesMeta,
+  sessionP90,
+  cap,
+}: {
+  seriesMeta: Array<{
+    name: string;
+    color: string;
+    avg: number | null;
+    tb: number | null;
+    p90: number | null;
+    std: number | null;
+  }>;
+  sessionP90: number | null;
+  cap: number | null;
+}) {
+  return (
+    <div className='space-y-2  pb-10'>
+      <ChartKeyRow sessionP90={sessionP90} cap={cap} />
+
+      <div className='flex flex-col gap-1'>
+        {seriesMeta.map((m) => (
+          <div
+            key={m.name}
+            className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'
+          >
+            <span className='inline-flex items-center gap-2'>
+              <span
+                className='h-2.5 w-2.5 rounded-full'
+                style={{ background: m.color }}
+              />
+              <span className='font-medium'>{m.name}</span>
+            </span>
+
+            <span className='text-muted-foreground'>
+              AVG{' '}
+              <span className='font-mono text-foreground'>{fmt(m.avg)}</span>
+            </span>
+
+            <span className='text-muted-foreground'>
+              TB <span className='font-mono text-foreground'>{fmt(m.tb)}</span>
+            </span>
+
+            <span className='text-muted-foreground'>
+              P90{' '}
+              <span className='font-mono text-foreground'>{fmt(m.p90)}</span>
+            </span>
+
+            <span className='text-muted-foreground'>
+              σ{' '}
+              <span className='font-mono text-foreground'>
+                {m.std != null ? `${(m.std / 1000).toFixed(3)}s` : '—'}
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SessionLapsScatterChart({ data, sessionName }: Props) {
-  const cap =
-    data.sessionStats?.p90_lap_ms != null
-      ? Math.ceil(data.sessionStats.p90_lap_ms * 1.15)
-      : undefined;
+  const sessionP90 = num(data.sessionStats?.p90_lap_ms);
+  const cap = sessionP90 != null ? Math.ceil(sessionP90 * 1.15) : null;
 
   const chartConfig: ChartConfig = Object.fromEntries(
     data.drivers.map((d) => [
@@ -140,12 +207,12 @@ export function SessionLapsScatterChart({ data, sessionName }: Props) {
       points: d.laps
         .filter((l) => l.is_valid)
         .map((l) => {
-          const y = l.lap_duration_ms;
-          const isCapped = cap != null && y > cap;
+          const yReal = l.lap_duration_ms;
+          const isCapped = cap != null && yReal > cap;
           return {
             x: l.lap_number,
-            y: isCapped ? cap : y,
-            realY: y,
+            y: isCapped ? cap : yReal,
+            realY: yReal,
             isCapped,
             driverName,
             driverColor,
@@ -154,73 +221,114 @@ export function SessionLapsScatterChart({ data, sessionName }: Props) {
     };
   });
 
-  // xMax für Hover-Linien (damit sie über die ganze Chart-Breite gehen)
-  const xMax = useMemo(() => {
-    let max = 0;
-    for (const s of series) {
-      for (const p of s.points) {
-        if (p.x > max) max = p.x;
-      }
-    }
-    return Math.max(1, max);
-  }, [series]);
+  const seriesMeta = series.map((s) => ({
+    name: s.name,
+    color: s.color,
+    avg: num(s.stats?.avg_lap_ms),
+    tb: num(s.stats?.theoretical_best_ms),
+    p90: num(s.stats?.p90_lap_ms),
+    std:
+      typeof s.stats?.stddev_lap_ms === 'number' ? s.stats.stddev_lap_ms : null,
+  }));
 
-  // Hover-Lines (unsichtbar, aber dicke Hover-Zone)
-  const hoverLines = [
-    // Session P90
-    ...(data.sessionStats?.p90_lap_ms != null
-      ? [
-          {
-            key: 'hover_p90',
-            y: Number(data.sessionStats.p90_lap_ms),
-            label: 'Session P90',
-            color: 'var(--muted-foreground)',
-          },
-        ]
-      : []),
+  // ReferenceLines: erst sammeln, dann rendern (ohne Fragment)
+  const lineSessionP90 =
+    sessionP90 != null ? (
+      <ReferenceLine
+        key='line_session_p90'
+        xAxisId={X_ID}
+        yAxisId={Y_ID}
+        y={sessionP90}
+        stroke='var(--muted-foreground)'
+        strokeDasharray='10 10'
+        strokeWidth={2}
+        isFront
+        label={{
+          value: 'P90',
+          position: 'left',
+          fill: 'var(--muted-foreground)',
+          fontSize: 11,
+        }}
+      />
+    ) : null;
 
-    // pro Fahrer AVG/TB
-    ...series.flatMap((s) => {
-      const avg = toNum(s.stats?.avg_lap_ms);
-      const tb = toNum(s.stats?.theoretical_best_ms);
-      const out: Array<{
-        key: string;
-        y: number;
-        label: string;
-        color: string;
-      }> = [];
-      if (avg != null)
-        out.push({
-          key: `${s.key}_avg`,
-          y: avg,
-          label: `${s.name} AVG`,
-          color: s.color,
-        });
-      if (tb != null)
-        out.push({
-          key: `${s.key}_tb`,
-          y: tb,
-          label: `${s.name} TB`,
-          color: s.color,
-        });
-      return out;
-    }),
-  ];
+  const avgLines = series
+    .map((s) => {
+      const y = num(s.stats?.avg_lap_ms);
+      if (y == null) return null;
+      return (
+        <ReferenceLine
+          key={`line_${s.key}_avg`}
+          xAxisId={X_ID}
+          yAxisId={Y_ID}
+          y={y}
+          stroke={s.color}
+          strokeDasharray='12 12'
+          strokeWidth={2}
+          strokeOpacity={0.95}
+          isFront
+          label={{
+            value: 'AVG',
+            position: 'left',
+            fill: s.color,
+            fontSize: 11,
+          }}
+        />
+      );
+    })
+    .filter(Boolean);
+
+  const tbLines = series
+    .map((s) => {
+      const y = num(s.stats?.theoretical_best_ms);
+      if (y == null) return null;
+      return (
+        <ReferenceLine
+          key={`line_${s.key}_tb`}
+          xAxisId={X_ID}
+          yAxisId={Y_ID}
+          y={y}
+          stroke={s.color}
+          strokeWidth={3}
+          strokeOpacity={0.85}
+          isFront
+          label={{
+            value: 'TB',
+            position: 'left',
+            fill: s.color,
+            fontSize: 11,
+          }}
+        />
+      );
+    })
+    .filter(Boolean);
+
+  const refLines = [lineSessionP90, ...avgLines, ...tbLines].filter(Boolean);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Rundenvergleich</CardTitle>
         <CardDescription>
-          {sessionName ?? 'Session'} — jede Runde als Punkt (AVG/TB/P90
-          hoverbar)
+          {sessionName ?? 'Session'} — Linien: AVG/TB (Fahrerfarbe), grau:
+          Session P90
         </CardDescription>
       </CardHeader>
 
       <CardContent className='h-[650px]'>
         <ChartContainer config={chartConfig} className='h-full w-full'>
-          <ScatterChart margin={{ left: 12, right: 24, top: 8, bottom: 8 }}>
-            <Legend />
+          <ScatterChart margin={{ left: 12, right: 12, top: 8, bottom: 8 }}>
+            <Legend
+              verticalAlign='top'
+              content={
+                <CustomLegend
+                  seriesMeta={seriesMeta}
+                  sessionP90={sessionP90}
+                  cap={cap}
+                />
+              }
+            />
+
             <CartesianGrid />
 
             <XAxis
@@ -260,87 +368,8 @@ export function SessionLapsScatterChart({ data, sessionName }: Props) {
               />
             ))}
 
-            {/* Sichtbare Linien */}
-            {data.sessionStats?.p90_lap_ms != null && (
-              <ReferenceLine
-                key='session_p90'
-                xAxisId={X_ID}
-                yAxisId={Y_ID}
-                y={Number(data.sessionStats.p90_lap_ms)}
-                stroke='var(--muted-foreground)'
-                strokeDasharray='10 10'
-                strokeWidth={2}
-                isFront
-                label={{
-                  value: 'Session P90',
-                  position: 'right',
-                  fill: 'var(--muted-foreground)',
-                  fontSize: 11,
-                }}
-              />
-            )}
-
-            {series.map((s) => {
-              const avg = toNum(s.stats?.avg_lap_ms);
-              const tb = toNum(s.stats?.theoretical_best_ms);
-
-              return (
-                <React.Fragment key={`${s.key}_ref`}>
-                  {avg != null && (
-                    <ReferenceLine
-                      xAxisId={X_ID}
-                      yAxisId={Y_ID}
-                      y={avg}
-                      stroke={s.color}
-                      strokeDasharray='12 12'
-                      strokeWidth={2}
-                      isFront
-                      label={{
-                        value: `${s.name} AVG`,
-                        position: 'right',
-                        fill: s.color,
-                        fontSize: 11,
-                      }}
-                    />
-                  )}
-
-                  {tb != null && (
-                    <ReferenceLine
-                      xAxisId={X_ID}
-                      yAxisId={Y_ID}
-                      y={tb}
-                      stroke={s.color}
-                      strokeWidth={3}
-                      strokeOpacity={0.85}
-                      isFront
-                      label={{
-                        value: `${s.name} TB`,
-                        position: 'right',
-                        fill: s.color,
-                        fontSize: 11,
-                      }}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-
-            {/* Unsichtbare Hover-Linien (für Tooltip) */}
-            {hoverLines.map((hl) => (
-              <Line
-                key={hl.key}
-                xAxisId={X_ID}
-                yAxisId={Y_ID}
-                data={hoverLineData(hl.y, xMax, hl.label, hl.color)}
-                dataKey='y'
-                stroke='transparent'
-                strokeWidth={14} // Hover-Zone
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                // wichtig: damit das Element oben liegt und Events bekommt
-              />
-            ))}
+            {/* Linien oben drüber */}
+            {refLines}
           </ScatterChart>
         </ChartContainer>
       </CardContent>
