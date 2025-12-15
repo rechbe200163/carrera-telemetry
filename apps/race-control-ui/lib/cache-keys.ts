@@ -64,6 +64,9 @@ export const CACHE_KEYS = {
   meeting: (id: number) => `meeting-${id}`,
   meetingsByChampionship: (championshipId: number) =>
     `meetings-championship-${championshipId}`,
+
+  statsBySessionEveryLap: (sessionId: number) =>
+    `stats-laps-session-${sessionId}`,
 } as const;
 
 export type CacheKey = keyof typeof CACHE_KEYS;
