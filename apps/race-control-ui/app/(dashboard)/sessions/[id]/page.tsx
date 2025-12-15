@@ -2,14 +2,7 @@ import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  ArrowLeft,
-  Circle,
-  ExternalLink,
-  Square,
-  TrendingUp,
-  Zap,
-} from 'lucide-react';
+import { ArrowLeft, Circle, ExternalLink, TrendingUp, Zap } from 'lucide-react';
 import { SessionTypeBadge } from '@/components/session-type-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
