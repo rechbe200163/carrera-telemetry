@@ -57,8 +57,8 @@ export default async function SessionsPage() {
                         ) : (
                           <p className='font-mono font-bold'>
                             {session.time_limit_seconds &&
-                              session.time_limit_seconds / 60}
-                            min
+                              session.time_limit_seconds / 60}{' '}
+                            Minuten
                           </p>
                         )}
                       </div>

@@ -139,7 +139,7 @@ export default async function SessionDetailPage({
                     </p>
                     <p className='font-mono text-lg'>
                       {session.session_type === 'RACE'
-                        ? `${session.laps ?? '-'} Runden`
+                        ? `${session.lap_limit ?? '-'} Runden`
                         : `${(session.time_limit_seconds && session.time_limit_seconds / 60) ?? '-'} Minuten`}
                     </p>
                   </div>
