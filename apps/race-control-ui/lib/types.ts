@@ -143,7 +143,7 @@ export interface LeaderBoard {
   };
 }
 
-type DriverRuntimeState = {
+export type DriverRuntimeState = {
   driverId: number;
   controllerAddress: number;
   lapsCompleted: number;
@@ -156,8 +156,26 @@ type DriverRuntimeState = {
   gapToLeaderMs: number | null;
 };
 
-type SessionRuntimeSnapshot = {
+export type SessionRuntimeSnapshot = {
   sessionId: number;
   updatedAt: string;
   drivers: DriverRuntimeState[];
+};
+
+export type LapsComparisonResponse = {
+  sessionId: number;
+  sessionStats?: {
+    p90_lap_ms: number | null;
+  };
+  drivers: Array<{
+    driver: Pick<Drivers, 'id' | 'code' | 'color' | 'first_name' | 'last_name'>;
+    laps: Pick<Laps, 'lap_number' | 'lap_duration_ms' | 'is_valid'>[];
+    stats?: {
+      avg_lap_ms: number | null;
+      stddev_lap_ms: number | null;
+      p90_lap_ms: number | null;
+      best_lap_ms: number | null;
+      theoretical_best_ms: number | null;
+    };
+  }>;
 };
