@@ -1,6 +1,9 @@
 import { FormState } from './fom.types';
 
-const BASE_URL = 'https://carrera-api.mrhost.uk';
+const BASE_URL =
+  process.env.NODE_ENV === 'production'
+    ? process.env.API_URL_PROD
+    : process.env.API_URL;
 
 export class ApiError extends Error {
   constructor(
@@ -21,7 +24,6 @@ export class ApiClient {
     method: string,
     body?: TBody
   ): Promise<TResponse> {
-    console.log(BASE_URL);
     const resp = await fetch(`${this.baseUrl}${path}`, {
       method,
       headers: {
