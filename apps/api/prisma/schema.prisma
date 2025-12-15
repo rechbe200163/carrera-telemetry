@@ -61,6 +61,7 @@ model driver_standings {
   points_total    Int           @default(0)
   wins            Int           @default(0)
   podiums         Int           @default(0)
+  best_finish_position Int?
   races_started   Int           @default(0)
   last_updated    DateTime      @default(now()) @db.Timestamp(6)
   championships   championships @relation(fields: [championship_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ds_championship")
