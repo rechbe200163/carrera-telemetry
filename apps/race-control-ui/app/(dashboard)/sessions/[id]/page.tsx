@@ -2,7 +2,14 @@ import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Circle, ExternalLink, Square, Zap } from 'lucide-react';
+import {
+  ArrowLeft,
+  Circle,
+  ExternalLink,
+  Square,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
 import { SessionTypeBadge } from '@/components/session-type-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
@@ -146,6 +153,16 @@ export default async function SessionDetailPage({
                   <Button className='w-full' asChild>
                     <Link href={`/sessions/${session.id}/results`}>
                       Ergebnisse anzeigen
+                    </Link>
+                  </Button>
+                  <Button
+                    className='w-full bg-transparent'
+                    asChild
+                    variant='outline'
+                  >
+                    <Link href={`/sessions/${session.id}/stats`}>
+                      <TrendingUp className='mr-2 h-4 w-4' />
+                      Runden Vergeleich
                     </Link>
                   </Button>
                 </>
