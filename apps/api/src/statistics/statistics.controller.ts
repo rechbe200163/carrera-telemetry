@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -60,13 +67,18 @@ export class StatisticsController {
     return this.statisticsService.getDriverDailyStatsForDay(day);
   }
 
+  @Get('sessions/:sessionId/laps-comparison')
+  getLapsComparison(@Param('sessionId', ParseIntPipe) sessionId: number) {
+    return this.statisticsService.getLapsComparisonBySession(sessionId);
+  }
+
   // =========================
   // MAINTENANCE
   // =========================
 
   // POST /statistics/rebuild
   // Manuelles Triggern der Nightly Aggregation
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_DAY_AT_8PM)
   aggregateStats() {
     console.log('now ist 10 am');
     return this.statisticsService.aggregateStats();
