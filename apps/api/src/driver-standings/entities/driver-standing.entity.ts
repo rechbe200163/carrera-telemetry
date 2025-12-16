@@ -6,4 +6,5 @@ export class DriverStanding {
   wins: number;
   podiums: number;
   races_started: number;
+  best_finish_position?: number | null;
 }

@@ -1,24 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from 'src/prisma.service';
 import { DriverStandingsRepo } from './driver-standings.repo';
 import { DriverStandingsService } from './driver-standings.service';
 
 describe('DriverStandingsService', () => {
   let service: DriverStandingsService;
-  const prisma = {
-    session_results: { findMany: jest.fn() },
-    driver_standings: {
-      deleteMany: jest.fn(),
-      create: jest.fn(),
-    },
+  const repo = {
+    getLeaderBoard: jest.fn(),
+    recomputeStandingsForChampionship: jest.fn(),
   };
-  const repo = { getLeaderBoard: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DriverStandingsService,
-        { provide: PrismaService, useValue: prisma },
         { provide: DriverStandingsRepo, useValue: repo },
       ],
     }).compile();
@@ -27,74 +21,17 @@ describe('DriverStandingsService', () => {
     jest.clearAllMocks();
   });
 
-  it('clears standings when no results exist', async () => {
-    prisma.session_results.findMany.mockResolvedValue([]);
-    prisma.driver_standings.deleteMany.mockResolvedValue({});
+  it('delegates recomputation to repo and returns leaderboard', async () => {
+    repo.recomputeStandingsForChampionship.mockResolvedValue(undefined);
+    repo.getLeaderBoard.mockResolvedValue([{ points_total: 10 }]);
 
-    await service.recalculateForChampionship(1);
+    const result = await service.recalculateForChampionship(42);
 
-    expect(prisma.driver_standings.deleteMany).toHaveBeenCalledWith({
-      where: { championship_id: 1 },
-    });
-    expect(prisma.driver_standings.create).not.toHaveBeenCalled();
-  });
-
-  it('aggregates results and rewrites standings', async () => {
-    prisma.session_results.findMany.mockResolvedValue([
-      {
-        driver_id: 10,
-        points_total: 25,
-        position: 1,
-        sessions: { session_type: 'RACE' },
-      },
-      {
-        driver_id: 10,
-        points_total: 5,
-        position: 2,
-        sessions: { session_type: 'PRACTICE' },
-      },
-      {
-        driver_id: 11,
-        points_total: 18,
-        position: 2,
-        sessions: { session_type: 'RACE' },
-      },
-    ]);
-    prisma.driver_standings.deleteMany.mockResolvedValue({});
-    prisma.driver_standings.create.mockResolvedValue({});
-
-    const res = await service.recalculateForChampionship(7);
-
-    expect(prisma.driver_standings.deleteMany).toHaveBeenCalledWith({
-      where: { championship_id: 7 },
-    });
-    expect(prisma.driver_standings.create).toHaveBeenCalledTimes(2);
-    expect(prisma.driver_standings.create).toHaveBeenCalledWith({
-      data: {
-        championship_id: 7,
-        driver_id: 10,
-        points_total: 30,
-        wins: 1,
-        podiums: 1,
-        races_started: 1,
-      },
-    });
-    expect(prisma.driver_standings.create).toHaveBeenCalledWith({
-      data: {
-        championship_id: 7,
-        driver_id: 11,
-        points_total: 18,
-        wins: 0,
-        podiums: 1,
-        races_started: 1,
-      },
-    });
-    expect(res).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ driver_id: 10, points_total: 30 }),
-        expect.objectContaining({ driver_id: 11, points_total: 18 }),
-      ]),
-    );
+    expect(
+      repo.recomputeStandingsForChampionship,
+    ).toHaveBeenCalledWith(42);
+    expect(repo.getLeaderBoard).toHaveBeenCalledWith(42);
+    expect(result).toEqual([{ points_total: 10 }]);
   });
 
   it('maps leaderboard rows to position-aware DTO', async () => {
