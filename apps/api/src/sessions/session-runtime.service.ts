@@ -3,9 +3,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SessionsRepo } from './sessions.repo';
 import { MqttService } from 'src/mqtt/mqtt.service';
 import { SessionType } from 'generated/prisma/enums';
-import { SessionResultsService } from 'src/session-result/session-result.service';
 import { Observable, Subject } from 'rxjs';
-import { SessionsEventsService } from './sessions-events.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SessionLifecycleService } from './session-lifecycle.service';
+import { SESSION_STARTED_EVENT } from 'src/events/events';
 
 // --- Runtime-Typen für Live-UI ---
 
@@ -36,6 +37,7 @@ export type SessionRuntimeSnapshot = {
 
 type SessionRuntimeState = {
   sessionId: number;
+  meetingId: number;
   sessionType: SessionType;
   lapLimit: number | null;
   timeLimitSeconds: number | null;
@@ -65,9 +67,9 @@ export class SessionRuntimeService {
 
   constructor(
     private readonly sessionsRepo: SessionsRepo,
-    private readonly sessionResultsService: SessionResultsService,
     private readonly mqtt: MqttService,
-    private readonly events: SessionsEventsService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly lifecycle: SessionLifecycleService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -87,6 +89,7 @@ export class SessionRuntimeService {
 
     const state: SessionRuntimeState = {
       sessionId,
+      meetingId: session.meeting_id,
       sessionType: session.session_type, // PRACTICE | QUALYFING | RACE | FUN
       lapLimit: session.lap_limit,
       timeLimitSeconds: session.time_limit_seconds,
@@ -100,6 +103,15 @@ export class SessionRuntimeService {
     this.driversBySession.set(sessionId, new Map());
     this.ensureSubject(sessionId); // SSE-Subject vorbereiten
 
+    this.eventEmitter.emit(SESSION_STARTED_EVENT, {
+      sessionId,
+      meetingId: session.meeting_id,
+      sessionType: session.session_type,
+      lapLimit: session.lap_limit,
+      timeLimitSeconds: session.time_limit_seconds,
+      startedAt: session.start_time!,
+    });
+
     // optional: "start" Topic nach draußen schicken (für Python, etc.)
     await this.mqtt.publish('race_control/sessions/start', {
       sessionId,
@@ -107,56 +119,6 @@ export class SessionRuntimeService {
 
     this.logger.log(
       `Session ${sessionId} started: type=${state.sessionType}, lapLimit=${state.lapLimit}, timeLimit=${state.timeLimitSeconds}`,
-    );
-  }
-
-  /**
-   * Session wirklich beenden:
-   * - status = FINISHED
-   * - end_time setzen
-   * - session_results berechnen & speichern
-   * - Session aus Runtime-Maps entfernen
-   * - MQTT "stop" publishen
-   */
-  async finishSession(sessionId: number): Promise<void> {
-    // 1) Session in DB schließen
-    this.events.emit({
-      type: 'session_stop',
-      payload: {
-        sessionId,
-        reason: 'finished',
-        stoppedAt: new Date().toISOString(),
-      },
-    });
-
-    await this.sessionsRepo.finishSession(sessionId);
-
-    // 2) Ergebnisse berechnen
-    const results =
-      await this.sessionResultsService.calculateSessionResults(sessionId);
-
-    // 3) optional: an Python / CU "stop" schicken
-    await this.mqtt.publish('race_control/sessions/stop', {
-      sessionId,
-    });
-
-    this.stopTicker(sessionId);
-
-    const finalSnap = this.buildSnapshot(sessionId);
-
-    // 4) Live-State aufräumen
-    this.runtimeBySession.delete(sessionId);
-    this.driversBySession.delete(sessionId);
-
-    const subj = this.subjectsBySession.get(sessionId);
-    if (subj) {
-      subj.next(finalSnap);
-      subj.complete();
-      this.subjectsBySession.delete(sessionId);
-    }
-
-    this.logger.log(
-      `Session ${sessionId} finished with ${results.length} results entries.`,
     );
   }
 
@@ -223,14 +185,14 @@ export class SessionRuntimeService {
 
     // 1) Laps-basierte Sessions (z.B. RACE)
     if (
-      state.sessionType === 'RACE' &&
+      state.sessionType === SessionType.RACE &&
       state.lapLimit !== null &&
       lapNumber >= state.lapLimit
     ) {
       this.logger.log(
         `Session ${sessionId}: lapLimit ${state.lapLimit} reached (lap=${lapNumber}) -> finishing session`,
       );
-      await this.finishSession(sessionId);
+      await this.lifecycle.finishSession(sessionId);
       return;
     }
 
@@ -241,7 +203,7 @@ export class SessionRuntimeService {
         this.logger.log(
           `Session ${sessionId}: timeLimit ${state.timeLimitSeconds}s reached -> finishing session`,
         );
-        await this.finishSession(sessionId);
+        await this.lifecycle.finishSession(sessionId);
         return;
       }
     }
@@ -440,7 +402,7 @@ export class SessionRuntimeService {
       if (state.timeLimitSeconds != null) {
         const endTs = state.startedAt.getTime() + state.timeLimitSeconds * 1000;
         if (Date.now() >= endTs) {
-          await this.finishSession(sessionId);
+          await this.lifecycle.finishSession(sessionId);
           return;
         }
       }
@@ -456,5 +418,20 @@ export class SessionRuntimeService {
     const t = this.tickersBySession.get(sessionId);
     if (t) clearInterval(t);
     this.tickersBySession.delete(sessionId);
+  }
+
+  async cleanup(sessionId: number): Promise<void> {
+    this.stopTicker(sessionId);
+    const finalSnap = this.buildSnapshot(sessionId);
+
+    const subj = this.subjectsBySession.get(sessionId);
+    if (subj) {
+      subj.next(finalSnap);
+      subj.complete();
+      this.subjectsBySession.delete(sessionId);
+    }
+
+    this.runtimeBySession.delete(sessionId);
+    this.driversBySession.delete(sessionId);
   }
 }

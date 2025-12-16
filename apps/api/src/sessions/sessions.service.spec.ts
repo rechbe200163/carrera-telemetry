@@ -60,7 +60,7 @@ describe('SessionsService', () => {
     await service.startSession(1, { durationMinutes: 10 } as any);
 
     expect(repo.startSession).toHaveBeenCalledWith(1, {
-      time_limit_seconds: 10,
+      time_limit_seconds: 600,
       lap_limit: null,
     });
     expect(runtime.onSessionStart).toHaveBeenCalledWith(1);

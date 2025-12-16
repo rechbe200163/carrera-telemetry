@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
+import { SessionsEventsService } from './sessions-events.service';
 
 describe('SessionsController (HTTP)', () => {
   let app: INestApplication;
@@ -13,6 +14,7 @@ describe('SessionsController (HTTP)', () => {
     findOne: jest.Mock;
     findByMeetingId: jest.Mock;
   };
+  const events = { events$: null, emit: jest.fn() };
 
   beforeEach(async () => {
     service = {
@@ -25,7 +27,10 @@ describe('SessionsController (HTTP)', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SessionsController],
-      providers: [{ provide: SessionsService, useValue: service }],
+      providers: [
+        { provide: SessionsService, useValue: service },
+        { provide: SessionsEventsService, useValue: events },
+      ],
     }).compile();
 
     app = module.createNestApplication();
