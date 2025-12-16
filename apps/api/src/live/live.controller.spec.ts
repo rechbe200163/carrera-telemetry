@@ -1,17 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LiveController } from './live.controller';
-import { LiveService } from './live.service';
+import { LiveSessionsController } from './live.controller';
+import { SessionRuntimeService } from 'src/sessions/session-runtime.service';
 
 describe('LiveController', () => {
-  let controller: LiveController;
+  let controller: LiveSessionsController;
+  const runtime = { streamSession: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [LiveController],
-      providers: [LiveService],
+      controllers: [LiveSessionsController],
+      providers: [
+        { provide: SessionRuntimeService, useValue: runtime },
+      ],
     }).compile();
 
-    controller = module.get<LiveController>(LiveController);
+    controller = module.get<LiveSessionsController>(LiveSessionsController);
   });
 
   it('should be defined', () => {

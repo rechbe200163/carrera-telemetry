@@ -49,6 +49,7 @@ describe('LapEventsConsumer', () => {
 
     const lapHandler = getHandler('carrera/cu/lapTimes')!;
     const payload = {
+      sessionId: 1,
       controllerAddress: 10,
       lapNumber: 3,
       wallClockTs: 1_700_000_000_000,
@@ -70,7 +71,15 @@ describe('LapEventsConsumer', () => {
       is_pit_out_lap: false,
       is_valid: true,
     });
-    expect(sessionRuntime.onLapPersisted).toHaveBeenCalledWith(1, 3);
+    expect(sessionRuntime.onLapPersisted).toHaveBeenCalledWith({
+      sessionId: 1,
+      driverId: 7,
+      controllerAddress: 10,
+      lapNumber: 3,
+      lapTimeMs: 900,
+      sector1Ms: 1,
+      sector2Ms: 2,
+    });
   });
 
   it('ignores lap events when no active session or mapping exists', async () => {
