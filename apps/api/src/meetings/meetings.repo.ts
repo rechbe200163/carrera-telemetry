@@ -81,4 +81,95 @@ export class MeetingsRepo {
       excludeExtraneousValues: true,
     });
   }
+
+  async recomputeMeetingStatus(meetingId: number): Promise<{
+    meetingId: number;
+    championshipId: number | null;
+    changedToFinished: boolean;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      const meeting = await tx.meetings.findUnique({
+        where: { id: meetingId },
+        select: { id: true, status: true, championship_id: true },
+      });
+
+      if (!meeting) {
+        return { meetingId, championshipId: null, changedToFinished: false };
+      }
+
+      const totalSessions = await tx.sessions.count({
+        where: { meeting_id: meetingId },
+      });
+
+      if (totalSessions === 0) {
+        return {
+          meetingId,
+          championshipId: meeting.championship_id ?? null,
+          changedToFinished: false,
+        };
+      }
+
+      const finishedSessions = await tx.sessions.count({
+        where: { meeting_id: meetingId, status: 'FINISHED' },
+      });
+
+      const shouldBeFinished = finishedSessions === totalSessions;
+
+      // Idempotenz: wenn schon finished, nix tun
+      if (meeting.status === 'FINISHED') {
+        return {
+          meetingId,
+          championshipId: meeting.championship_id ?? null,
+          changedToFinished: false,
+        };
+      }
+
+      if (!shouldBeFinished) {
+        return {
+          meetingId,
+          championshipId: meeting.championship_id ?? null,
+          changedToFinished: false,
+        };
+      }
+
+      // 1) Meeting auf FINISHED setzen
+      await tx.meetings.update({
+        where: { id: meetingId },
+        data: { status: 'FINISHED' },
+        select: { id: true },
+      });
+
+      // 2) Championship held_meetings erhöhen (nur wenn championship vorhanden)
+      if (meeting.championship_id != null) {
+        const championship = await tx.championships.update({
+          where: { id: meeting.championship_id },
+          data: { held_meetings: { increment: 1 } },
+          select: {
+            id: true,
+            held_meetings: true,
+            planned_meetings: true,
+            closed: true,
+          },
+        });
+
+        // 3) Optional automatisch schließen
+        if (
+          championship.held_meetings >= championship.planned_meetings &&
+          !championship.closed
+        ) {
+          await tx.championships.update({
+            where: { id: championship.id },
+            data: { closed: true },
+            select: { id: true },
+          });
+        }
+      }
+
+      return {
+        meetingId,
+        championshipId: meeting.championship_id ?? null,
+        changedToFinished: true,
+      };
+    });
+  }
 }
