@@ -29,4 +29,10 @@ export class ControllersRepo {
       data,
     });
   }
+
+  async remove(id: number) {
+    return this.prisma.controllers.delete({
+      where: { id },
+    });
+  }
 }

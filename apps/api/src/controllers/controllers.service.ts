@@ -22,4 +22,8 @@ export class ControllersService {
   update(id: number, updateControllerDto: UpdateControllerDto) {
     return this.controllersRepo.update(id, updateControllerDto);
   }
+
+  remove(id: number) {
+    return this.controllersRepo.remove(id);
+  }
 }
