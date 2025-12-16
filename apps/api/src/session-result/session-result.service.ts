@@ -132,7 +132,9 @@ export class SessionResultsService {
       }
     }
 
-    // 👇 hier wirklich in die DB schreiben
+    // bestehende Ergebnisse leeren, damit der Lauf idempotent bleibt
+    await this.sessionResultsRepo.deleteBySession(sessionId);
+    // hier wirklich in die DB schreiben
     await this.sessionResultsRepo.createSessionResultsForSessionAndDriver(
       sorted,
     );

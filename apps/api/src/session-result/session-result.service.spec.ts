@@ -9,7 +9,10 @@ describe('SessionResultsService', () => {
   let service: SessionResultsService;
   const lapsRepo = { findBySession: jest.fn() };
   const sessionsRepo = { findById: jest.fn() };
-  const sessionResultsRepo = { createSessionResultsForSessionAndDriver: jest.fn() };
+  const sessionResultsRepo = {
+    createSessionResultsForSessionAndDriver: jest.fn(),
+    deleteBySession: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -49,6 +52,7 @@ describe('SessionResultsService', () => {
 
     const results = await service.calculateSessionResults(1);
 
+    expect(sessionResultsRepo.deleteBySession).toHaveBeenCalledWith(1);
     expect(results).toEqual([
       {
         session_id: 1,
@@ -88,6 +92,7 @@ describe('SessionResultsService', () => {
 
     const results = await service.calculateSessionResults(2);
 
+    expect(sessionResultsRepo.deleteBySession).toHaveBeenCalledWith(2);
     expect(results).toEqual([
       {
         session_id: 2,

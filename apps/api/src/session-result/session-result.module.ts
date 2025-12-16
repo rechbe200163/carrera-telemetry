@@ -6,6 +6,7 @@ import { PrismaService } from 'src/prisma.service';
 import { LapsModule } from 'src/laps/laps.module';
 import { SessionsModule } from 'src/sessions/sessions.module';
 import { SessionResultsRebuildService } from './session-result-rebuild-service';
+import { SessionResultsListener } from './session-results.listener';
 
 @Module({
   imports: [LapsModule, forwardRef(() => SessionsModule)],
@@ -14,6 +15,7 @@ import { SessionResultsRebuildService } from './session-result-rebuild-service';
     SessionResultsService,
     SessionResultsRepo,
     SessionResultsRebuildService,
+    SessionResultsListener,
     PrismaService,
   ],
   exports: [SessionResultsService],
