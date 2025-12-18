@@ -31,3 +31,14 @@ export async function createSessionEntriesAction(
     payload
   );
 }
+
+export async function deleteSessionEntriesAction(
+  sessionId: number,
+  controllerAddress: number,
+  _prevState: FormState
+): Promise<FormState> {
+  updateTag(CACHE_KEYS.sessionEntries);
+  return apiClient.safeDelete(
+    ENDPOINTS.SESSION_ENTRIES.DELETE(sessionId, controllerAddress)
+  );
+}

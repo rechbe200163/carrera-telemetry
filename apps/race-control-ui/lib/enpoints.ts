@@ -81,12 +81,13 @@ export const ENDPOINTS = {
 
   // --- Session Entries (Driver/Controller Paarung) ---
   SESSION_ENTRIES: {
-    POST: (id: number) => `/sessions/${id}/entries`,
+    POST: (id: number) => `/sessions-entries/${id}`,
     GET: '/session-entries',
     GET_ID: (id: number) => `/session-entries/${id}`,
     PATCH: (id: number) => `/session-entries/${id}`,
-    DELETE: (id: number) => `/session-entries/${id}`,
-    GET_BY_SESSION_ID: (sessionId: number) => `/sessions/${sessionId}/entries`,
+    DELETE: (sessionId: number, controllerAddress: number) =>
+      `/sessions-entries/${sessionId}/controller/${controllerAddress}`,
+    GET_BY_SESSION_ID: (sessionId: number) => `/sessions-entries/${sessionId}`,
   },
 
   SESSION_RESULTS: {

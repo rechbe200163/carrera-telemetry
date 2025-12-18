@@ -16,6 +16,7 @@ import { getAllControllers } from '@/lib/api/controller-api.service copy';
 import { RaceSessionStatus } from '@/components/race-session-status';
 import { TimedSessionCountdown } from '@/components/timed-session-countdown';
 import { getChampionshipById } from '@/lib/api/championship-api.service';
+import DeleteSessionEntries from '@/components/forms/session-entries/DeleteSessionEntries';
 
 export default async function SessionDetailPage({
   params,
@@ -201,6 +202,10 @@ export default async function SessionDetailPage({
                           <p className='text-xs text-muted-foreground'>Auto</p>
                           <p className='text-sm'>{entry.car_label || '-'}</p>
                         </div>
+                        <DeleteSessionEntries
+                          controllerAddress={entry.controller_address}
+                          sessionId={entry.session_id}
+                        />
                       </div>
                     </div>
                   ))}
