@@ -314,6 +314,15 @@ model driver_all_time_stats {
 
   driver_id Int @unique(map: "uq_dats_driver")
 
+// results/career summary
+  sessions_total Int @default(0)     // alle FINISHED Sessions (egal type)
+  races_started  Int @default(0)     // FINISHED + session_type=RACE
+  wins           Int @default(0)
+  p2_finishes    Int @default(0)
+  p3_finishes    Int @default(0)  
+  best_finish_position Int?
+  avg_finish_position  Float?
+  
   // counts
   laps_total   Int @default(0)
   laps_valid   Int @default(0)
