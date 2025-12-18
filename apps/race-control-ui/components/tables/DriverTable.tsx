@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 
 import { DriverBadge } from '@/components/driver-badge';
 
-import { Plus, Pencil, Trash2, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, BarChart3 } from 'lucide-react';
 
 import {
   Table,
@@ -23,6 +23,7 @@ import {
 import { Drivers } from '@/lib/types';
 import EditDriver from '../forms/drivers/EditDriver';
 import DeleteDriver from '../forms/drivers/DeleteDriver';
+import Link from 'next/link';
 
 function DriverTable({ drivers }: { drivers: Drivers[] }) {
   return (
@@ -80,6 +81,17 @@ function DriverTable({ drivers }: { drivers: Drivers[] }) {
                 </TableCell>
                 <TableCell className='text-right'>
                   <div className='flex items-center justify-end gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      asChild
+                      className='bg-transparent'
+                    >
+                      <Link href={`/drivers/${driver.id}/stats`}>
+                        <BarChart3 className='mr-1.5 h-3.5 w-3.5' />
+                        Daten
+                      </Link>
+                    </Button>
                     <EditDriver driver={driver} />
                     <DeleteDriver driverId={driver.id} />
                   </div>
