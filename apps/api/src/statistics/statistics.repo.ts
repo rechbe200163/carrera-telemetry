@@ -25,6 +25,13 @@ export class StatisticsRepo {
     // Prisma erlaubt keine "lazy" $executeRaw in tx-array, daher: direkt so:
     await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`
+        INSERT INTO race_control.driver_all_time_stats (driver_id, computed_at)
+        SELECT d.id, NOW()::timestamp(6)
+        FROM race_control.drivers d
+        ON CONFLICT (driver_id) DO NOTHING;
+      `;
+
+      await tx.$executeRaw`
         INSERT INTO race_control.driver_session_stats (
           session_id, driver_id,
           laps_total, laps_valid, laps_invalid,
@@ -291,6 +298,44 @@ export class StatisticsRepo {
       last_lap_at         = GREATEST(race_control.driver_all_time_stats.last_lap_at, EXCLUDED.last_lap_at),
       computed_at         = EXCLUDED.computed_at;
       `;
+
+      await tx.$executeRaw`
+      UPDATE race_control.driver_all_time_stats a
+      SET
+        sessions_total       = x.sessions_total,
+        races_started        = x.races_started,
+        wins                 = x.wins,
+        p2_finishes          = x.p2_finishes,
+        p3_finishes          = x.p3_finishes,
+        best_finish_position = x.best_finish_position,
+        avg_finish_position  = x.avg_finish_position,
+        computed_at          = NOW()::timestamp(6)
+      FROM (
+        SELECT
+          sr.driver_id,
+
+          -- alle FINISHED Sessions (egal type)
+          COUNT(*) FILTER (WHERE s.status = 'FINISHED')::int AS sessions_total,
+
+          -- FINISHED RACE Sessions
+          COUNT(*) FILTER (WHERE s.status = 'FINISHED' AND s.session_type = 'RACE')::int AS races_started,
+
+          -- Platzierungen nur für FINISHED RACE
+          COUNT(*) FILTER (WHERE s.status = 'FINISHED' AND s.session_type = 'RACE' AND sr.position = 1)::int AS wins,
+          COUNT(*) FILTER (WHERE s.status = 'FINISHED' AND s.session_type = 'RACE' AND sr.position = 2)::int AS p2_finishes,
+          COUNT(*) FILTER (WHERE s.status = 'FINISHED' AND s.session_type = 'RACE' AND sr.position = 3)::int AS p3_finishes,
+
+          -- best / avg finish nur FINISHED RACE
+          MIN(sr.position) FILTER (WHERE s.status = 'FINISHED' AND s.session_type = 'RACE')::int AS best_finish_position,
+          AVG(sr.position) FILTER (WHERE s.status = 'FINISHED' AND s.session_type = 'RACE')       AS avg_finish_position
+
+        FROM race_control.session_results sr
+        JOIN race_control.sessions s
+          ON s.id = sr.session_id
+        GROUP BY sr.driver_id
+      ) x
+      WHERE a.driver_id = x.driver_id;
+    `;
     });
   }
 
@@ -338,6 +383,12 @@ export class StatisticsRepo {
       where: { day: new Date(day) },
       include: { drivers: true },
       orderBy: [{ best_lap_ms: 'asc' }],
+    });
+  }
+
+  async getDriverAllTimeStats(driverId: number) {
+    return this.prisma.driver_all_time_stats.findUnique({
+      where: { driver_id: driverId },
     });
   }
 }

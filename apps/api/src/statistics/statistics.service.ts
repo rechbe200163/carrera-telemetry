@@ -65,6 +65,10 @@ export class StatisticsService {
     return this.statisticsRepo.getDriverDailyStatsForDay(day);
   }
 
+  getDriverAllTimeStats(driverId: number) {
+    return this.statisticsRepo.getDriverAllTimeStats(driverId);
+  }
+
   async getLapsComparisonBySession(
     sessionId: number,
   ): Promise<LapsComparisonResponse> {

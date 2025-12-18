@@ -72,6 +72,10 @@ export class StatisticsController {
     return this.statisticsService.getLapsComparisonBySession(sessionId);
   }
 
+  @Get('driver/:id/all-time')
+  driverAllTimeStats(@Param('id', ParseIntPipe) id: number) {
+    return this.statisticsService.getDriverAllTimeStats(id);
+  }
   // =========================
   // MAINTENANCE
   // =========================
@@ -80,7 +84,7 @@ export class StatisticsController {
   // Manuelles Triggern der Nightly Aggregation
   @Cron(CronExpression.EVERY_DAY_AT_8PM)
   aggregateStats() {
-    console.log('now ist 10 am');
+    console.log('aggregated Stats');
     return this.statisticsService.aggregateStats();
   }
 }
