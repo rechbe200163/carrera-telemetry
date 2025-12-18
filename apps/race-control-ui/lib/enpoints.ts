@@ -118,6 +118,8 @@ export const ENDPOINTS = {
   STATISTICS: {
     GET_LAPS_FOR_ALL_DRIVERS_BY_SESSION: (sessionId: number) =>
       `/statistics/sessions/${sessionId}/laps-comparison`,
+    GET_DRIVER_ALL_TIME: (driverId: number) =>
+      `/statistics/driver/${driverId}/all-time`,
   },
 } as const;
 

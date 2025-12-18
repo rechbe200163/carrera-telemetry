@@ -179,3 +179,49 @@ export type LapsComparisonResponse = {
     };
   }>;
 };
+
+export type DriverAllTimeStats = {
+  id: number;
+
+  driver_id: number;
+  // results/career summary
+
+  sessions_total: number; // alle FINISHED Sessions (egal type)
+  races_started: number; // FINISHED + session_type=RACE
+  wins: number;
+  p2_finishes: number;
+  p3_finishes: number;
+  best_finish_position?: number;
+  avg_finish_position?: number;
+
+  // counts
+  laps_total: number;
+  laps_valid: number;
+  laps_invalid: number;
+  // lap pace
+  best_lap_ms?: number;
+  avg_lap_ms?: number;
+  median_lap_ms?: number;
+  p90_lap_ms?: number;
+  stddev_lap_ms?: number;
+
+  // sectors (optional)
+  best_s1_ms?: number;
+  best_s2_ms?: number;
+  best_s3_ms?: number;
+
+  avg_s1_ms?: number;
+  avg_s2_ms?: number;
+  avg_s3_ms?: number;
+
+  stddev_s1_ms?: number | null;
+  stddev_s2_ms?: number | null;
+  stddev_s3_ms?: number | null;
+
+  theoretical_best_ms: number;
+
+  // meta
+  first_lap_at?: Date;
+  last_lap_at?: Date;
+  computed_at: Date;
+};

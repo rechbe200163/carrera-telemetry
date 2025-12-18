@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api-client';
 import { ENDPOINTS } from '../enpoints';
 import { cacheTag } from 'next/cache';
 import { CACHE_KEYS } from '../cache-keys';
-import { LapsComparisonResponse } from '../types';
+import { DriverAllTimeStats, LapsComparisonResponse } from '../types';
 
 // ------------------------------------------------------
 //  GET SESSION ENTRIES BY SESSION ID
@@ -18,5 +18,16 @@ export async function getLapsForSessionStat(
 
   return apiClient.get<LapsComparisonResponse>(
     ENDPOINTS.STATISTICS.GET_LAPS_FOR_ALL_DRIVERS_BY_SESSION(sessionId)
+  );
+}
+
+export async function getDriverAllTimeStats(
+  driverId: number
+): Promise<DriverAllTimeStats> {
+  'use cache';
+  cacheTag(CACHE_KEYS.getDriverAllTimeStats(driverId));
+
+  return apiClient.get<DriverAllTimeStats>(
+    ENDPOINTS.STATISTICS.GET_DRIVER_ALL_TIME(driverId)
   );
 }

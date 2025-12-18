@@ -67,6 +67,8 @@ export const CACHE_KEYS = {
 
   statsBySessionEveryLap: (sessionId: number) =>
     `stats-laps-session-${sessionId}`,
+  getDriverAllTimeStats: (driverId: number) =>
+    `all-time-stats-driver-${driverId}`,
 } as const;
 
 export type CacheKey = keyof typeof CACHE_KEYS;
