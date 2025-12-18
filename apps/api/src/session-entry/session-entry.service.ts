@@ -45,4 +45,8 @@ export class SessionEntriesService {
   async listEntries(sessionId: number) {
     return this.repo.listEntriesForSession(sessionId);
   }
+
+  async delete(sessionId: number, controllerAddress: number) {
+    return this.repo.delete(sessionId, controllerAddress);
+  }
 }

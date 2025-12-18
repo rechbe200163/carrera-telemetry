@@ -74,4 +74,15 @@ export class SessionEntriesRepo {
       where: { session_id: sessionId },
     });
   }
+
+  async delete(controllerAddress: number, sessionId: number) {
+    return this.prisma.session_entries.delete({
+      where: {
+        session_id_controller_address: {
+          session_id: sessionId,
+          controller_address: controllerAddress,
+        },
+      },
+    });
+  }
 }
