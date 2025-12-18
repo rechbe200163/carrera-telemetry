@@ -131,9 +131,11 @@ export default function DriverStatsComponent({
                   <Flag className='h-6 w-6 text-cyan-500' />
                 </div>
                 <div>
-                  <p className='text-sm text-muted-foreground'>Sessions</p>
+                  <p className='text-sm text-muted-foreground'>
+                    Durschnittliche Platzierung
+                  </p>
                   <p className='text-3xl font-bold font-mono'>
-                    {driverAllTimeStats.sessions_total}
+                    {driverAllTimeStats.avg_finish_position?.toFixed(1)}
                   </p>
                 </div>
               </div>
