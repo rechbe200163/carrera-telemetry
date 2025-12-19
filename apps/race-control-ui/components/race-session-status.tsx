@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Waypoints } from 'lucide-react';
-import { ENDPOINTS } from '@/lib/enpoints';
+import { ENDPOINTS } from '@/lib/endpoints';
 
 type RaceSessionStatusProps = {
   lapLimit: number | null;
