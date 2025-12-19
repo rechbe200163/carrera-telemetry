@@ -1,17 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-  ParseBoolPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, ParseIntPipe } from '@nestjs/common';
 import { DriverStandingsService } from './driver-standings.service';
-import { CreateDriverStandingDto } from './dto/create-driver-standing.dto';
-import { UpdateDriverStandingDto } from './dto/update-driver-standing.dto';
 import { ApiResponse } from '@nestjs/swagger';
 import { DriverStandingsLeaderBoard } from './entities/driver-standings-leaderboard.entity';
 
@@ -34,6 +22,12 @@ export class DriverStandingsController {
     return this.driverStandingsService.getLeaderBoard(id);
   }
 
+  @Post(':championshipId/recalculate')
+  recomputeDriverStanding(@Param('championshipId') championshipId: number) {
+    return this.driverStandingsService.recalculateForChampionship(
+      championshipId,
+    );
+  }
   // @Get(':id')
   // findOne(@Param('id') id: string) {
   //   return this.driverStandingsService.findOne(+id);
