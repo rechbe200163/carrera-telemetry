@@ -2,7 +2,7 @@
 'server-only';
 
 import { apiClient } from '@/lib/api-client';
-import { ENDPOINTS } from '../enpoints';
+import { ENDPOINTS } from '../endpoints';
 import { cacheTag } from 'next/cache';
 import { CACHE_KEYS } from '../cache-keys';
 import { DriverAllTimeStats, LapsComparisonResponse } from '../types';

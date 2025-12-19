@@ -2,7 +2,7 @@
 
 import { updateTag } from 'next/cache';
 import { apiClient } from '../api-client';
-import { ENDPOINTS } from '../enpoints';
+import { ENDPOINTS } from '../endpoints';
 import { FormState } from '../fom.types';
 import { CACHE_KEYS } from '../cache-keys';
 

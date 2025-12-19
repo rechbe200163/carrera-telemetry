@@ -1,7 +1,7 @@
 'server-only';
 
 import { apiClient } from '@/lib/api-client';
-import { ENDPOINTS } from '../enpoints';
+import { ENDPOINTS } from '../endpoints';
 import { Meetings } from '../types';
 import { cacheTag } from 'next/cache';
 import { CACHE_KEYS } from '../cache-keys';

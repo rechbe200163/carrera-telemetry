@@ -1,7 +1,7 @@
 'use server';
 import { apiClient } from '@/lib/api-client';
 import { FormState } from '../fom.types';
-import { ENDPOINTS } from '@/lib/enpoints';
+import { ENDPOINTS } from '@/lib/endpoints';
 import { updateTag } from 'next/cache';
 import { CACHE_KEYS } from '../cache-keys';
 

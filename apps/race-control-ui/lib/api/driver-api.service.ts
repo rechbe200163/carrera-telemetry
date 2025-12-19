@@ -3,7 +3,7 @@
 
 import { apiClient } from '@/lib/api-client';
 import { Drivers } from '../types';
-import { ENDPOINTS } from '../enpoints';
+import { ENDPOINTS } from '../endpoints';
 import { cacheTag } from 'next/cache';
 import { CACHE_KEYS } from '../cache-keys';
 

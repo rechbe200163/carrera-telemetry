@@ -2,7 +2,7 @@
 import { updateTag } from 'next/cache';
 import { apiClient } from '../api-client';
 import { CACHE_KEYS } from '../cache-keys';
-import { ENDPOINTS } from '../enpoints';
+import { ENDPOINTS } from '../endpoints';
 import { FormState } from '../fom.types';
 
 export async function createMeetingsAction(
