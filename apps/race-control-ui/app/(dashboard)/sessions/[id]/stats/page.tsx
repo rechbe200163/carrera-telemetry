@@ -8,7 +8,7 @@ async function StatsPage({ params }: { params: Promise<{ id: string }> }) {
   const chartData = await getLapsForSessionStat(Number(id));
   return (
     <div className='p-5'>
-      <SessionLapsScatterChart data={chartData} sessionName={session.name} />
+      {/* <SessionLapsScatterChart data={chartData} sessionName={session.name} /> */}
     </div>
   );
 }
