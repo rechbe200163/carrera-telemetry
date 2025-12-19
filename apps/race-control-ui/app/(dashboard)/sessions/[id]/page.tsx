@@ -2,7 +2,14 @@ import Link from 'next/link';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Circle, ExternalLink, TrendingUp, Zap } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart3,
+  Circle,
+  ExternalLink,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
 import { SessionTypeBadge } from '@/components/session-type-badge';
 import { StatusBadge } from '@/components/status-badge';
 import { DriverBadge } from '@/components/driver-badge';
@@ -17,6 +24,7 @@ import { RaceSessionStatus } from '@/components/race-session-status';
 import { TimedSessionCountdown } from '@/components/timed-session-countdown';
 import { getChampionshipById } from '@/lib/api/championship-api.service';
 import DeleteSessionEntries from '@/components/forms/session-entries/DeleteSessionEntries';
+import HeaderComponent from '@/components/helpers/HeaderComponent';
 
 export default async function SessionDetailPage({
   params,
@@ -70,20 +78,7 @@ export default async function SessionDetailPage({
     <div className='flex flex-col'>
       <div className='space-y-6 p-6'>
         {/* Session Header */}
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <SessionTypeBadge type={session.session_type} size='lg' />
-            <div>
-              <h1 className='text-2xl font-bold tracking-tight'>
-                {meeting?.name}
-              </h1>
-              <p className='text-muted-foreground'>
-                {championship?.name} - Runde {meeting?.round_number}
-              </p>
-            </div>
-          </div>
-          <StatusBadge status={sessionStatus} />
-        </div>
+        <HeaderComponent sessionId={Number(id)} />
 
         <div className='grid gap-6 lg:grid-cols-3'>
           {/* Control Panel */}
@@ -147,6 +142,16 @@ export default async function SessionDetailPage({
                   <Button className='w-full' asChild>
                     <Link href={`/sessions/${session.id}/results`}>
                       Ergebnisse anzeigen
+                    </Link>
+                  </Button>{' '}
+                  <Button
+                    className='w-full bg-transparent'
+                    asChild
+                    variant='outline'
+                  >
+                    <Link href={`/sessions/${session.id}/lap-stats`}>
+                      <BarChart3 className='mr-2 h-4 w-4' />
+                      Einzelne Statistiken
                     </Link>
                   </Button>
                   <Button
