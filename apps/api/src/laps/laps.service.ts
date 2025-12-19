@@ -27,6 +27,10 @@ export class LapsService {
     return lap;
   }
 
+  findBySessionIdDriverId(sessionId: number, driverId: number) {
+    return this.lapsRepo.findBySessionAndDriver(sessionId, driverId);
+  }
+
   create(createLapDto: CreateLapDto) {
     return 'This action adds a new lap';
   }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateLapDto } from './dto/create-lap.dto';
 import { Lap } from './entities/lap.entity';
@@ -35,13 +35,16 @@ export class LapsRepo {
   }
 
   async findBySessionAndDriver(sessionId: number, driverId: number) {
-    return this.prisma.laps.findMany({
+    const data = await this.prisma.laps.findMany({
       where: {
         session_id: sessionId,
         driver_id: driverId,
       },
       orderBy: [{ lap_number: 'asc' }],
     });
+    if (!data || data.length === 0)
+      throw new NotFoundException('Dataset for criteria not found');
+    return data;
   }
 
   async findLatestForSession(sessionId: number): Promise<Lap | null> {

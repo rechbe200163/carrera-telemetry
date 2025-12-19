@@ -50,6 +50,13 @@ export class LapsController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.lapsService.remove(+id);
   }
+  @Get('/session/:sessionId/driver/:driverId')
+  getLapsSessionDriver(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @Param('driverId', ParseIntPipe) driverId: number,
+  ) {
+    return this.lapsService.findBySessionIdDriverId(sessionId, driverId);
+  }
 
   @Sse(':sessionId/stream')
   streamLapUpdatesForSession(
