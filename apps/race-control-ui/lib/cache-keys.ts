@@ -33,6 +33,8 @@ export const CACHE_KEYS = {
   // ---- LAPS ----
   laps: 'laps',
   lap: (id: number) => `lap-${id}`,
+  lapsSessionDriver: (sessionId: number, driverId: number) =>
+    `lap-session-${sessionId}-driver-${driverId}`,
   sessionLiveLaps: (sessionId: number) => `session-${sessionId}-live-laps`,
 
   // ---- RACE EVENTS ----

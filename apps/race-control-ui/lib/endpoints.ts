@@ -53,6 +53,8 @@ export const ENDPOINTS = {
   LAPS: {
     POST: '/laps',
     GET: '/laps',
+    GET_BY_SESSION_BY_DRIVER: (sessionId: number, driverId: number) =>
+      `/laps/session/${sessionId}/driver/${driverId}`,
     GET_ID: (id: number) => `/laps/${id}`,
     PATCH: (id: number) => `/laps/${id}`,
     DELETE: (id: number) => `/laps/${id}`,

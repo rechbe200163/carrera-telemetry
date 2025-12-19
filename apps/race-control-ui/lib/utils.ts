@@ -16,3 +16,12 @@ export const controllerColors = [
   { key: 'brown', color: 'text-amber-800' },
   { key: 'gray', color: 'text-gray-400' },
 ] as const;
+
+export function safeMin(
+  values: Array<number | null | undefined>
+): number | null {
+  const v = values.filter(
+    (x): x is number => typeof x === 'number' && Number.isFinite(x)
+  );
+  return v.length ? Math.min(...v) : null;
+}
