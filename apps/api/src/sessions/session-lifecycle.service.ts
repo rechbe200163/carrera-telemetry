@@ -17,7 +17,7 @@ export class SessionLifecycleService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async finishSession(sessionId: number): Promise<void> {
+  async finishSessionLifeCycle(sessionId: number): Promise<void> {
     if (this.finished.has(sessionId) || this.finishing.has(sessionId)) {
       return;
     }
