@@ -17,6 +17,15 @@ export class SessionLifecycleService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  /**
+   * Optional: Cleanup damit Sets nicht unendlich wachsen.
+   * Aufrufen z.B. aus SessionRuntimeService.cleanup(sessionId).
+   */
+  clear(sessionId: number): void {
+    this.finishing.delete(sessionId);
+    this.finished.delete(sessionId);
+  }
+
   async finishSessionLifeCycle(sessionId: number): Promise<void> {
     if (this.finished.has(sessionId) || this.finishing.has(sessionId)) {
       return;
@@ -27,7 +36,9 @@ export class SessionLifecycleService {
     try {
       const session = await this.sessionsRepo.findById(sessionId);
       if (!session) {
-        this.logger.warn(`finishSession: session ${sessionId} not found`);
+        this.logger.warn(
+          `finishSessionLifeCycle: session ${sessionId} not found`,
+        );
         return;
       }
 
@@ -46,7 +57,10 @@ export class SessionLifecycleService {
       this.finished.add(sessionId);
       this.eventEmitter.emit(SESSION_FINISHED_EVENT, payload);
     } catch (err) {
-      this.logger.error(`finishSession(${sessionId}) failed`, err as any);
+      this.logger.error(
+        `finishSessionLifeCycle(${sessionId}) failed`,
+        err as any,
+      );
       throw err;
     } finally {
       this.finishing.delete(sessionId);
