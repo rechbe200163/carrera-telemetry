@@ -11,7 +11,9 @@ describe('SessionRuntimeService', () => {
   const sessionsRepo = { findById: jest.fn() };
   const mqtt = { publish: jest.fn() };
   const eventEmitter = { emit: jest.fn() } as unknown as EventEmitter2;
-  const lifecycle = { finishSession: jest.fn() } as unknown as SessionLifecycleService;
+  const lifecycle = {
+    finishSessionLifeCycle: jest.fn(),
+  } as unknown as SessionLifecycleService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -75,7 +77,7 @@ describe('SessionRuntimeService', () => {
       lapNumber: 1,
       lapTimeMs: 100,
     });
-    expect(lifecycle.finishSession).not.toHaveBeenCalled();
+    expect(lifecycle.finishSessionLifeCycle).not.toHaveBeenCalled();
   });
 
   it('signals lifecycle when lap limit is reached', async () => {
@@ -98,7 +100,7 @@ describe('SessionRuntimeService', () => {
       lapTimeMs: 800,
     });
 
-    expect(lifecycle.finishSession).toHaveBeenCalledWith(3);
+    expect(lifecycle.finishSessionLifeCycle).toHaveBeenCalledWith(3);
   });
 
   it('signals lifecycle when time limit is exceeded', async () => {
@@ -122,8 +124,98 @@ describe('SessionRuntimeService', () => {
       lapTimeMs: 900,
     });
 
-    expect(lifecycle.finishSession).toHaveBeenCalledWith(4);
+    expect(lifecycle.finishSessionLifeCycle).toHaveBeenCalledWith(4);
     (Date.now as jest.Mock).mockRestore();
+  });
+
+  it('waits for other drivers to finish their final lap in finish phase', async () => {
+    const start = new Date('2024-01-01T00:00:00Z');
+    sessionsRepo.findById.mockResolvedValue({
+      id: 6,
+      meeting_id: 7,
+      session_type: 'RACE',
+      lap_limit: 2,
+      time_limit_seconds: null,
+      start_time: start,
+    });
+
+    await service.onSessionStart(6);
+
+    await service.onLapPersisted({
+      sessionId: 6,
+      driverId: 1,
+      controllerAddress: 11,
+      lapNumber: 1,
+      lapTimeMs: 800,
+    });
+
+    await service.onLapPersisted({
+      sessionId: 6,
+      driverId: 2,
+      controllerAddress: 12,
+      lapNumber: 1,
+      lapTimeMs: 850,
+    });
+
+    await service.onLapPersisted({
+      sessionId: 6,
+      driverId: 1,
+      controllerAddress: 11,
+      lapNumber: 2,
+      lapTimeMs: 810,
+    });
+
+    expect(lifecycle.finishSessionLifeCycle).not.toHaveBeenCalled();
+
+    await service.onLapPersisted({
+      sessionId: 6,
+      driverId: 2,
+      controllerAddress: 12,
+      lapNumber: 2,
+      lapTimeMs: 820,
+    });
+
+    expect(lifecycle.finishSessionLifeCycle).toHaveBeenCalledWith(6);
+  });
+
+  it('finishes immediately when drivers are more than one lap down at trigger', async () => {
+    const start = new Date('2024-01-01T00:00:00Z');
+    sessionsRepo.findById.mockResolvedValue({
+      id: 7,
+      meeting_id: 8,
+      session_type: 'RACE',
+      lap_limit: 3,
+      time_limit_seconds: null,
+      start_time: start,
+    });
+
+    await service.onSessionStart(7);
+
+    await service.onLapPersisted({
+      sessionId: 7,
+      driverId: 1,
+      controllerAddress: 21,
+      lapNumber: 1,
+      lapTimeMs: 900,
+    });
+
+    await service.onLapPersisted({
+      sessionId: 7,
+      driverId: 2,
+      controllerAddress: 22,
+      lapNumber: 1,
+      lapTimeMs: 920,
+    });
+
+    await service.onLapPersisted({
+      sessionId: 7,
+      driverId: 1,
+      controllerAddress: 21,
+      lapNumber: 3,
+      lapTimeMs: 880,
+    });
+
+    expect(lifecycle.finishSessionLifeCycle).toHaveBeenCalledWith(7);
   });
 
   it('cleans up state and completes SSE subject on cleanup', async () => {
