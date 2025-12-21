@@ -14,7 +14,7 @@ export type DriverRuntimeState = {
   driverId: number;
   controllerAddress: number;
 
-  // ACHTUNG: lapsCompleted = ANZAHL ABGESCHLOSSENER (persistierter) RUNDEN
+  // lapsCompleted = ANZAHL ABGESCHLOSSENER (persistierter) RUNDEN
   lapsCompleted: number;
 
   // currentLap = die gerade laufende Runde (also lapsCompleted + 1)
@@ -26,6 +26,9 @@ export type DriverRuntimeState = {
   sector2Ms: number | null;
   totalTimeMs: number;
   gapToLeaderMs: number | null;
+
+  // NEU: für "wartet nicht ewig" + Finish-Phase
+  lastProgressAtMs: number;
 };
 
 export type SessionRuntimeSnapshot = {
@@ -35,10 +38,27 @@ export type SessionRuntimeSnapshot = {
   startedAt: string | null;
   timeLimitSeconds: number | null;
 
+  // optional für UI (nice-to-have)
+  finishPhaseActive?: boolean;
+  finishTriggeredAtMs?: number | null;
+
   drivers: DriverRuntimeState[];
 };
 
 // --- Session-Metadaten für Limit-Logik ---
+
+type FinishPhaseState = {
+  active: boolean;
+  triggeredAtMs: number;
+  triggeredByDriverId: number;
+  leaderLapAtTrigger: number;
+
+  // Fix für "sehr nahe beieinander"
+  graceMs: number;
+
+  // Fix damit Session nicht ewig hängt wenn jemand stehen bleibt
+  inactivityTimeoutMs: number;
+};
 
 type SessionRuntimeState = {
   sessionId: number;
@@ -47,6 +67,7 @@ type SessionRuntimeState = {
   lapLimit: number | null;
   timeLimitSeconds: number | null;
   startedAt: Date;
+  finishPhase: FinishPhaseState | null;
 };
 
 @Injectable()
@@ -69,6 +90,10 @@ export class SessionRuntimeService {
   >();
 
   private readonly tickersBySession = new Map<number, NodeJS.Timeout>();
+
+  // Tuning: kann man später configbar machen
+  private readonly FINISH_GRACE_MS = 800;
+  private readonly FINISH_INACTIVITY_TIMEOUT_MS = 8000;
 
   constructor(
     private readonly sessionsRepo: SessionsRepo,
@@ -105,6 +130,7 @@ export class SessionRuntimeService {
       lapLimit: session.lap_limit,
       timeLimitSeconds: session.time_limit_seconds,
       startedAt: session.start_time,
+      finishPhase: null,
     };
 
     this.runtimeBySession.set(sessionId, state);
@@ -113,7 +139,7 @@ export class SessionRuntimeService {
     this.driversBySession.set(sessionId, new Map());
     this.ensureSubject(sessionId);
 
-    // Ticker starten (Zeitlimit + UI ticks)
+    // Ticker starten (Zeitlimit + UI ticks + FinishPhase Check)
     this.startTicker(sessionId);
 
     // Event für UI/andere Services
@@ -160,6 +186,8 @@ export class SessionRuntimeService {
     const state = this.runtimeBySession.get(sessionId);
     if (!state) return;
 
+    const nowMs = Date.now();
+
     // Live-State für diesen Fahrer holen/erzeugen
     const driver = this.ensureDriverState(
       sessionId,
@@ -183,33 +211,53 @@ export class SessionRuntimeService {
     if (sector1Ms != null) driver.sector1Ms = sector1Ms;
     if (sector2Ms != null) driver.sector2Ms = sector2Ms;
 
+    // Progress timestamp (wichtig für FinishPhase Timeout)
+    driver.lastProgressAtMs = nowMs;
+
     // Gaps & Snapshot neu berechnen
     this.recalculateGaps(sessionId);
     this.broadcastSnapshot(sessionId);
 
     // -----------------------------------------------------------------------
-    // LIMIT-/FINISH-LOGIK
+    // FINISH-LOGIK (F1-Style)
     // -----------------------------------------------------------------------
 
-    // 1) Laps-basierte Sessions (RACE) -> NUR auf abgeschlossene/persistierte Runden prüfen
-    if (
-      state.sessionType === SessionType.RACE &&
-      state.lapLimit !== null &&
-      lapNumber >= state.lapLimit
-    ) {
-      this.logger.log(
-        `Session ${sessionId}: lapLimit ${state.lapLimit} reached (finishedLap=${lapNumber}) -> finishing session`,
-      );
-      await this.lifecycle.finishSessionLifeCycle(sessionId);
-      return;
+    // A) Race: FinishPhase starten, sobald irgendwer lapLimit erreicht.
+    //    Sieger steht dann fest (triggeredByDriverId), aber Session endet erst,
+    //    wenn alle fertig sind oder timeout greift.
+    if (state.sessionType === SessionType.RACE && state.lapLimit !== null) {
+      if (lapNumber >= state.lapLimit && state.finishPhase == null) {
+        const leaderId = this.getLeaderDriverId(sessionId);
+        if (leaderId === driverId) {
+          this.startFinishPhase(sessionId, state, driverId);
+        } else {
+          this.logger.log(
+            `Session ${sessionId}: lapLimit reached by driver=${driverId} but leader=${leaderId} -> not starting finish phase yet`,
+          );
+        }
+      }
+
+      // Wenn FinishPhase aktiv: prüfen, ob wir jetzt beenden dürfen
+      if (state.finishPhase?.active) {
+        if (this.areAllDriversFinished(sessionId, state)) {
+          this.logger.log(
+            `Session ${sessionId}: finish phase complete -> finishing session lifecycle`,
+          );
+          await this.lifecycle.finishSessionLifeCycle(sessionId);
+          return;
+        }
+      }
     }
 
-    // 2) Zeit-basierte Sessions (PRACTICE / QUALYFING / FUN)
+    // -----------------------------------------------------------------------
+    // ZEITLIMIT (Practice/Qualy/Fun)
+    // -----------------------------------------------------------------------
+
     if (state.timeLimitSeconds !== null) {
       const endTs = state.startedAt.getTime() + state.timeLimitSeconds * 1000;
-      if (Date.now() >= endTs) {
+      if (nowMs >= endTs) {
         this.logger.log(
-          `Session ${sessionId}: timeLimit ${state.timeLimitSeconds}s reached -> finishing session`,
+          `Session ${sessionId}: timeLimit ${state.timeLimitSeconds}s reached -> finishing session lifecycle`,
         );
         await this.lifecycle.finishSessionLifeCycle(sessionId);
         return;
@@ -243,17 +291,22 @@ export class SessionRuntimeService {
       sectorTimeMs,
     } = args;
 
+    const state = this.runtimeBySession.get(sessionId);
+    if (!state) return;
+
     const driver = this.ensureDriverState(
       sessionId,
       driverId,
       controllerAddress,
     );
 
-    // Bei Sector-Update sind wir in der laufenden Runde
     driver.currentLap = lapNumber;
 
     if (sectorNumber === 1) driver.sector1Ms = sectorTimeMs;
     if (sectorNumber === 2) driver.sector2Ms = sectorTimeMs;
+
+    // Progress timestamp (wenn jemand noch Sektoren fährt, ist er "aktiv")
+    driver.lastProgressAtMs = Date.now();
 
     this.broadcastSnapshot(sessionId);
   }
@@ -299,7 +352,11 @@ export class SessionRuntimeService {
         sector2Ms: null,
         totalTimeMs: 0,
         gapToLeaderMs: null,
+        lastProgressAtMs: Date.now(),
       });
+    } else {
+      // falls controllerAddress später erst sicher ist
+      map.get(driverId)!.controllerAddress = controllerAddress;
     }
 
     return map.get(driverId)!;
@@ -327,6 +384,8 @@ export class SessionRuntimeService {
       updatedAt: new Date().toISOString(),
       startedAt: runtime?.startedAt ? runtime.startedAt.toISOString() : null,
       timeLimitSeconds: runtime?.timeLimitSeconds ?? null,
+      finishPhaseActive: runtime?.finishPhase?.active ?? false,
+      finishTriggeredAtMs: runtime?.finishPhase?.triggeredAtMs ?? null,
       drivers,
     };
   }
@@ -351,8 +410,7 @@ export class SessionRuntimeService {
   private broadcastSnapshot(sessionId: number): void {
     const subject = this.subjectsBySession.get(sessionId);
     if (!subject) return;
-    const snap = this.buildSnapshot(sessionId);
-    subject.next(snap);
+    subject.next(this.buildSnapshot(sessionId));
   }
 
   private sortDrivers(
@@ -369,26 +427,87 @@ export class SessionRuntimeService {
         const bBest = b.bestLapMs ?? Number.MAX_SAFE_INTEGER;
 
         if (aBest !== bBest) return aBest - bBest;
-        // Tie-Breaker: wer mehr Runden hat, ist vorne
-        if (a.lapsCompleted !== b.lapsCompleted) {
+        if (a.lapsCompleted !== b.lapsCompleted)
           return b.lapsCompleted - a.lapsCompleted;
-        }
         return a.driverId - b.driverId;
       });
     }
 
     // RACE (und FUN): nach Runden und Total Time
     return [...drivers].sort((a, b) => {
-      // mehr Runden -> weiter vorne
-      if (a.lapsCompleted !== b.lapsCompleted) {
+      if (a.lapsCompleted !== b.lapsCompleted)
         return b.lapsCompleted - a.lapsCompleted;
-      }
-      // gleiche Runden -> geringere Gesamtzeit -> weiter vorne
-      if (a.totalTimeMs !== b.totalTimeMs) {
-        return a.totalTimeMs - b.totalTimeMs;
-      }
+      if (a.totalTimeMs !== b.totalTimeMs) return a.totalTimeMs - b.totalTimeMs;
       return a.driverId - b.driverId;
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Finish Phase (F1-Style)
+  // ---------------------------------------------------------------------------
+
+  private startFinishPhase(
+    sessionId: number,
+    state: SessionRuntimeState,
+    triggeredByDriverId: number,
+  ): void {
+    const driversMap = this.driversBySession.get(sessionId) ?? new Map();
+    const leaderLapAtTrigger = Math.max(
+      0,
+      ...Array.from(driversMap.values()).map((d) => d.lapsCompleted),
+    );
+
+    state.finishPhase = {
+      active: true,
+      triggeredAtMs: Date.now(),
+      triggeredByDriverId,
+      leaderLapAtTrigger,
+      graceMs: this.FINISH_GRACE_MS,
+      inactivityTimeoutMs: this.FINISH_INACTIVITY_TIMEOUT_MS,
+    };
+
+    this.logger.log(
+      `Session ${sessionId}: finish phase started by driver=${triggeredByDriverId} (leaderLapAtTrigger=${leaderLapAtTrigger}, lapLimit=${state.lapLimit}, graceMs=${this.FINISH_GRACE_MS}, inactivityTimeoutMs=${this.FINISH_INACTIVITY_TIMEOUT_MS})`,
+    );
+  }
+
+  /**
+   * "Alle fertig" bedeutet:
+   * - Grace Window vorbei (damit nahe beieinander sicher persisted)
+   * - jeder Fahrer ist entweder:
+   *   a) >= lapLimit (Final Lap beendet)
+   *   b) oder seit X ms kein Progress mehr (DNF / disconnected / Auto steht)
+   */
+  private areAllDriversFinished(
+    sessionId: number,
+    state: SessionRuntimeState,
+  ): boolean {
+    const fp = state.finishPhase;
+    if (!fp || state.lapLimit == null) return false;
+
+    const nowMs = Date.now();
+
+    // Grace: währenddessen niemals finishen
+    if (nowMs - fp.triggeredAtMs < fp.graceMs) {
+      return false;
+    }
+
+    const driversMap = this.driversBySession.get(sessionId);
+    if (!driversMap || driversMap.size === 0) return true;
+
+    for (const d of driversMap.values()) {
+      if (d.lapsCompleted >= state.lapLimit) continue;
+
+      // kein progress -> als finished behandeln
+      if (nowMs - d.lastProgressAtMs > fp.inactivityTimeoutMs) {
+        continue;
+      }
+
+      // sonst noch aktiv und nicht fertig
+      return false;
+    }
+
+    return true;
   }
 
   private startTicker(sessionId: number): void {
@@ -398,7 +517,22 @@ export class SessionRuntimeService {
       const state = this.runtimeBySession.get(sessionId);
       if (!state) return;
 
-      // Zeitbasierte Sessions: auto-finish auch wenn keine Laps kommen
+      // 1) RACE: finishPhase auch ohne neue laps/splits prüfen
+      if (
+        state.sessionType === SessionType.RACE &&
+        state.lapLimit !== null &&
+        state.finishPhase?.active
+      ) {
+        if (this.areAllDriversFinished(sessionId, state)) {
+          this.logger.log(
+            `Session ${sessionId}: finish phase complete (ticker) -> finishing session lifecycle`,
+          );
+          await this.lifecycle.finishSessionLifeCycle(sessionId);
+          return;
+        }
+      }
+
+      // 2) Zeitbasierte Sessions: auto-finish auch wenn keine Laps kommen
       if (state.timeLimitSeconds != null) {
         const endTs = state.startedAt.getTime() + state.timeLimitSeconds * 1000;
         if (Date.now() >= endTs) {
@@ -407,7 +541,7 @@ export class SessionRuntimeService {
         }
       }
 
-      // Snapshot pushen, damit UI "tickt"
+      // 3) Snapshot pushen, damit UI "tickt"
       this.broadcastSnapshot(sessionId);
     }, 250);
 
@@ -434,5 +568,19 @@ export class SessionRuntimeService {
 
     this.runtimeBySession.delete(sessionId);
     this.driversBySession.delete(sessionId);
+  }
+
+  private getLeaderDriverId(sessionId: number): number | null {
+    const driversMap = this.driversBySession.get(sessionId);
+    if (!driversMap || driversMap.size === 0) return null;
+
+    const drivers = Array.from(driversMap.values()).sort((a, b) => {
+      if (a.lapsCompleted !== b.lapsCompleted)
+        return b.lapsCompleted - a.lapsCompleted;
+      if (a.totalTimeMs !== b.totalTimeMs) return a.totalTimeMs - b.totalTimeMs;
+      return a.driverId - b.driverId;
+    });
+
+    return drivers[0]?.driverId ?? null;
   }
 }
