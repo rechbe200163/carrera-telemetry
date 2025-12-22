@@ -5,6 +5,7 @@ import {
   SessionFinishedEvent,
 } from 'src/events/events';
 import { SessionsRepo } from './sessions.repo';
+import { Stauts } from 'generated/prisma/enums';
 
 @Injectable()
 export class SessionLifecycleService {
@@ -42,7 +43,7 @@ export class SessionLifecycleService {
         return;
       }
 
-      const alreadyFinished = session.status === 'FINISHED';
+      const alreadyFinished = session.status === Stauts.FINISHED;
       const updated = alreadyFinished
         ? session
         : await this.sessionsRepo.finishSession(sessionId);
