@@ -30,5 +30,6 @@ export function formatDate(date: Date | null | undefined) {
   if (!date) {
     return 'TBD';
   }
-  return date.toLocaleDateString();
+  const dateObj = new Date(date);
+  return dateObj.toLocaleDateString('de-AT');
 }
