@@ -8,6 +8,7 @@ import { DriverBadge } from '@/components/driver-badge';
 import AddMeetingsForm from '@/components/forms/meetings/AddMeeting';
 import { getChampionshipById } from '@/lib/api/championship-api.service';
 import { getMeetingsByChampionshipId } from '@/lib/api/meetings-api.service';
+import { formatDate } from '@/lib/utils';
 
 export default async function ChampionshipDetailPage({
   params,
@@ -59,7 +60,7 @@ export default async function ChampionshipDetailPage({
                           <p className='font-medium'>{meeting.name}</p>
                           <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                             <Calendar className='h-3 w-3' />
-                            {meeting.start_date + '' || 'TBD'}
+                            {formatDate(meeting.start_date)}
                           </div>
                         </div>
                       </div>
@@ -81,7 +82,10 @@ export default async function ChampionshipDetailPage({
           {/* Driver Standings */}
           <Card className='bg-card border-border'>
             <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle className='text-base'>Driver Standings</CardTitle>
+              <CardTitle className='text-base'>
+                Fahrer Wertung nach {championship.held_meetings}/
+                {championship.planned_meetings}
+              </CardTitle>
               <Button variant='ghost' size='sm' asChild>
                 <Link href='/standings'>Vollständig</Link>
               </Button>
