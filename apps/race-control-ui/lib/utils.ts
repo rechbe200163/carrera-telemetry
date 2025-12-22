@@ -25,3 +25,10 @@ export function safeMin(
   );
   return v.length ? Math.min(...v) : null;
 }
+
+export function formatDate(date: Date | null | undefined) {
+  if (!date) {
+    return 'TBD';
+  }
+  return date.toLocaleDateString();
+}
