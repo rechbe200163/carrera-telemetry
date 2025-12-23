@@ -84,7 +84,7 @@ export default async function ChampionshipDetailPage({
             <CardHeader className='flex flex-row items-center justify-between'>
               <CardTitle className='text-base'>
                 Fahrer Wertung nach {championship.held_meetings}/
-                {championship.planned_meetings}
+                {championship.planned_meetings} Rennen
               </CardTitle>
               <Button variant='ghost' size='sm' asChild>
                 <Link href='/standings'>Vollständig</Link>
