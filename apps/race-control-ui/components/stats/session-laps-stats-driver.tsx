@@ -7,6 +7,7 @@ import { getLapBySessionByDriverId } from '@/lib/api/laps-api.service';
 
 import { LapTimeDisplay } from '../lap-time-display';
 import { safeMin } from '@/lib/utils';
+import { LapsScatterChart } from '../charts/session-driver-laps-chart';
 
 function hexToRgba(hex: string, alpha: number): string {
   // akzeptiert "#RRGGBB" oder "RRGGBB"
@@ -214,7 +215,7 @@ export default async function SessionLapsStatisticsPage({
         </CardContent>
       </Card>
 
-      {/* <LapsScatterChart laps={laps} driver={driver} /> */}
+      <LapsScatterChart laps={laps} driver={driver} />
 
       {/* All Laps Table */}
       <Card className='bg-card border-border'>
