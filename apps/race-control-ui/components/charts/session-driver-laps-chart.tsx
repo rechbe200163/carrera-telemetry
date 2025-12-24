@@ -1,10 +1,8 @@
 'use client';
 
-import React from 'react';
 import {
   CartesianGrid,
   Legend,
-  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
