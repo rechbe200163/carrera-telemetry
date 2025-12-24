@@ -36,7 +36,12 @@
   --status-live: oklch(0.7 0.2 145);
   --status-finished: oklch(0.45 0 0);
 
+  /* theoretically best lap */
+  --theoretically-best: oklch(0.89 0.18 95);
+  --avg-lap: oklch(0.9029 0.2072 104.82);
+  --best-lap: oklch(0.684 0.2837 346.24);
   --chart-1: oklch(0.65 0.25 25);
+
   --chart-2: oklch(0.6 0.15 250);
   --chart-3: oklch(0.75 0.18 85);
   --chart-4: oklch(0.7 0.2 145);
