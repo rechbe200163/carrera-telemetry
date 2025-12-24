@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Drivers, Laps } from '@/lib/types';
+import { safeMin } from '@/lib/utils';
 
 const Y_MIN_MS = 5000;
 
@@ -146,6 +147,13 @@ export function LapsScatterChart({
     .map((l) => ({ lap: l.lap_number, ms: l.lap_duration_ms }))
     .filter((x) => Number.isFinite(x.lap) && Number.isFinite(x.ms));
 
+  const bestS1Ms = safeMin(laps.map((l) => l.duration_sector1));
+  const bestS2Ms = safeMin(laps.map((l) => l.duration_sector2));
+  const theoretically = bestS1Ms! + bestS2Ms!;
+
+  console.log(bestS1Ms, bestS2Ms);
+  console.log(theoretically);
+
   const sessionP90 = p90(valid.map((v) => v.ms));
   const cap = sessionP90 != null ? Math.ceil(sessionP90 * 1.1) : null;
 
@@ -219,18 +227,32 @@ export function LapsScatterChart({
               <ReferenceLine
                 y={bestLapMs}
                 strokeDasharray='2 4'
-                stroke={driver.color}
+                stroke='var(--best-lap)'
+                name='Beste Runde'
                 label={{
-                  value: `Best ${fmt(bestLapMs)}`,
+                  value: `Beste ${fmt(bestLapMs)}`,
                   position: 'insideTopLeft',
+                  fill: 'var(--best-lap)',
                 }}
               />
             )}
+
+            <ReferenceLine
+              y={theoretically}
+              stroke='var(--theoretically-best)'
+              strokeDasharray='4 4'
+              label={{
+                value: `TB ${fmt(theoretically)}`,
+                position: 'insideTopRight',
+                fill: 'var(--theoretically-best)',
+              }}
+            />
 
             {avgLapMs != null && (
               <ReferenceLine
                 y={avgLapMs}
                 strokeDasharray='6 6'
+                name='Durchschnitt'
                 label={{
                   value: `Ø ${fmt(avgLapMs)}`,
                   position: 'insideTopLeft',
