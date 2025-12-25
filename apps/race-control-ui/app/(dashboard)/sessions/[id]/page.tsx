@@ -10,21 +10,31 @@ import {
   TrendingUp,
   Zap,
 } from 'lucide-react';
-import { SessionTypeBadge } from '@/components/session-type-badge';
-import { StatusBadge } from '@/components/status-badge';
-import { DriverBadge } from '@/components/driver-badge';
+
 import { getSessionById } from '@/lib/api/session-api.service';
 import { getMeetingById } from '@/lib/api/meetings-api.service';
 import { getSessionEntriesBySessionId } from '@/lib/api/session-entries-api.service';
-import { StartSessionForm } from '@/components/forms/sessions/start-session-form';
-import { AddSessionEntryForm } from '@/components/forms/session-entries/AddSessionEntries';
 import { getAllDrivers } from '@/lib/api/driver-api.service';
 import { getAllControllers } from '@/lib/api/controller-api.service copy';
+import { getChampionshipById } from '@/lib/api/championship-api.service';
+
+import { StartSessionForm } from '@/components/forms/sessions/start-session-form';
+import { AddSessionEntryForm } from '@/components/forms/session-entries/AddSessionEntries';
+import DeleteSessionEntries from '@/components/forms/session-entries/DeleteSessionEntries';
 import { RaceSessionStatus } from '@/components/race-session-status';
 import { TimedSessionCountdown } from '@/components/timed-session-countdown';
-import { getChampionshipById } from '@/lib/api/championship-api.service';
-import DeleteSessionEntries from '@/components/forms/session-entries/DeleteSessionEntries';
 import HeaderComponent from '@/components/helpers/HeaderComponent';
+import { SessionType } from '@/lib/types';
+import { DriverBadge } from '@/components/driver-badge';
+
+function secondsToMinutes(seconds: number | null | undefined): number | null {
+  if (seconds == null) return null;
+  return Math.floor(seconds / 60);
+}
+
+function isTimedSession(type: SessionType) {
+  return type === 'PRACTICE' || type === 'QUALYFING';
+}
 
 export default async function SessionDetailPage({
   params,
@@ -34,16 +44,8 @@ export default async function SessionDetailPage({
   const { id } = await params;
 
   const session = await getSessionById(Number(id));
-  console.log(session);
-  const meetingId = session.meeting_id;
-  const meeting = await getMeetingById(meetingId);
-  const championshipId = meeting.championship_id;
-  if (!championshipId) return;
-  const championship = await getChampionshipById(championshipId);
 
-  const drivers = await getAllDrivers();
-  const controllers = await getAllControllers();
-
+  // ✅ Früh raus, bevor du auf session.meeting_id zugreifst
   if (!session) {
     return (
       <div className='flex flex-col'>
@@ -67,13 +69,26 @@ export default async function SessionDetailPage({
     );
   }
 
+  const meetingId = session.meeting_id;
+  const meeting = await getMeetingById(meetingId);
+
+  const championshipId = meeting?.championship_id ?? null;
+  const championship = championshipId
+    ? await getChampionshipById(championshipId)
+    : null;
+
+  const drivers = await getAllDrivers();
+  const controllers = await getAllControllers();
+
   // Session Entries für diese Session
   const sessionEntries = await getSessionEntriesBySessionId(session.id);
-  console.log(sessionEntries);
-
   const hasEntries = sessionEntries.length > 0;
 
   const sessionStatus = session.status;
+  const sessionType = session.session_type as SessionType;
+
+  const timeLimitMinutes = secondsToMinutes(session.time_limit_seconds);
+
   return (
     <div className='flex flex-col'>
       <div className='space-y-6 p-6'>
@@ -89,15 +104,18 @@ export default async function SessionDetailPage({
                 Session Control
               </CardTitle>
             </CardHeader>
+
             <CardContent className='space-y-4'>
+              {/* PLANNED */}
               {sessionStatus === 'PLANNED' && (
                 <StartSessionForm
                   sessionId={session.id}
-                  sessionType={session.session_type}
+                  sessionType={sessionType}
                   hasEntries={hasEntries}
                 />
               )}
 
+              {/* LIVE */}
               {sessionStatus === 'LIVE' && (
                 <>
                   <div className='rounded-lg border border-status-live/50 bg-status-live/20 p-4 text-center'>
@@ -107,43 +125,69 @@ export default async function SessionDetailPage({
                         Session läuft
                       </span>
                     </div>
-                    {session.session_type === 'RACE' ? (
+
+                    {/* ✅ SessionType spezifische LIVE Anzeige */}
+                    {sessionType === SessionType.RACE ? (
                       <RaceSessionStatus
-                        lapLimit={session.lap_limit!}
+                        lapLimit={session.lap_limit ?? 0}
                         sessionId={session.id}
                       />
+                    ) : sessionType === SessionType.FUN ? (
+                      <div className='text-sm text-muted-foreground'>
+                        asd Test / Setup Session – kein Timer, manuell beenden.
+                      </div>
+                    ) : isTimedSession(sessionType) ? (
+                      timeLimitMinutes != null ? (
+                        <TimedSessionCountdown
+                          timeLimitMinutes={timeLimitMinutes}
+                        />
+                      ) : (
+                        <div className='text-sm text-muted-foreground'>
+                          Kein Zeitlimit gesetzt.
+                        </div>
+                      )
                     ) : (
-                      <TimedSessionCountdown
-                        timeLimitMinutes={session.time_limit_seconds!}
-                      />
+                      <div className='text-sm text-muted-foreground'>
+                        Unbekannter Session-Typ.
+                      </div>
                     )}
                   </div>
+
                   <Button className='w-full' asChild>
                     <Link href={`/sessions/${session.id}/live`}>
                       <ExternalLink className='mr-2 h-4 w-4' />
                       Live Timing öffnen
                     </Link>
                   </Button>
+
+                  {/* Optional: hier könntest du später einen "Finish Session" Button anzeigen,
+                      wenn du bereits eine Action/Form dafür hast. */}
                 </>
               )}
 
+              {/* FINISHED */}
               {sessionStatus === 'FINISHED' && (
                 <>
                   <div className='rounded-lg bg-secondary p-4 text-center'>
                     <p className='mb-2 text-sm text-muted-foreground'>
                       Session beendet
                     </p>
+
                     <p className='font-mono text-lg'>
-                      {session.session_type === 'RACE'
+                      {sessionType === 'RACE'
                         ? `${session.lap_limit ?? '-'} Runden`
-                        : `${(session.time_limit_seconds && session.time_limit_seconds / 60) ?? '-'} Minuten`}
+                        : isTimedSession(sessionType)
+                          ? `${timeLimitMinutes ?? '-'} Minuten`
+                          : '—'}
                     </p>
                   </div>
+
                   <Button className='w-full' asChild>
                     <Link href={`/sessions/${session.id}/results`}>
                       Ergebnisse anzeigen
                     </Link>
-                  </Button>{' '}
+                  </Button>
+
                   <Button
                     className='w-full bg-transparent'
                     asChild
@@ -154,6 +198,7 @@ export default async function SessionDetailPage({
                       Einzelne Statistiken
                     </Link>
                   </Button>
+
                   <Button
                     className='w-full bg-transparent'
                     asChild
@@ -161,7 +206,7 @@ export default async function SessionDetailPage({
                   >
                     <Link href={`/sessions/${session.id}/stats`}>
                       <TrendingUp className='mr-2 h-4 w-4' />
-                      Runden Vergeleich
+                      Runden Vergleich
                     </Link>
                   </Button>
                 </>
@@ -183,6 +228,7 @@ export default async function SessionDetailPage({
                 controllers={controllers}
               />
             </CardHeader>
+
             <CardContent>
               {hasEntries ? (
                 <div className='space-y-2'>
