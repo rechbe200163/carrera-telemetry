@@ -30,6 +30,7 @@
   --practice: oklch(0.6 0.15 250);
   --quali: oklch(0.75 0.18 85);
   --race: oklch(0.6 0.22 25);
+  --fun: oklch(70.195% 0.23385 142.161);
 
   /* Status colors */
   --status-planned: oklch(0.5 0.05 260);
@@ -40,8 +41,8 @@
   --theoretically-best: oklch(0.89 0.18 95);
   --avg-lap: oklch(0.9029 0.2072 104.82);
   --best-lap: oklch(0.684 0.2837 346.24);
-  --chart-1: oklch(0.65 0.25 25);
 
+  --chart-1: oklch(0.65 0.25 25);
   --chart-2: oklch(0.6 0.15 250);
   --chart-3: oklch(0.75 0.18 85);
   --chart-4: oklch(0.7 0.2 145);
@@ -123,6 +124,7 @@
   --color-practice: var(--practice);
   --color-quali: var(--quali);
   --color-race: var(--race);
+  --color-fun: var(--fun);
   --color-status-planned: var(--status-planned);
   --color-status-live: var(--status-live);
   --color-status-finished: var(--status-finished);
