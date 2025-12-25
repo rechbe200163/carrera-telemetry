@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import type { SessionType } from '@/lib/types';
+import { cn, getSessionBadgeClass } from '@/lib/utils';
+import { SessionType } from '@/lib/types';
 
 interface SessionTypeBadgeProps {
   type: SessionType;
@@ -13,12 +13,14 @@ export function SessionTypeBadge({
 }: SessionTypeBadgeProps) {
   const getTypeStyles = (type: SessionType) => {
     switch (type) {
-      case 'PRACTICE':
-        return 'bg-practice text-white';
-      case 'QUALYFING':
-        return 'bg-quali text-black';
-      case 'RACE':
-        return 'bg-race text-white';
+      case SessionType.PRACTICE:
+        return getSessionBadgeClass(SessionType.PRACTICE);
+      case SessionType.QUALYFING:
+        return getSessionBadgeClass(SessionType.QUALYFING);
+      case SessionType.RACE:
+        return getSessionBadgeClass(SessionType.RACE);
+      case SessionType.FUN:
+        return getSessionBadgeClass(SessionType.FUN);
     }
   };
 
