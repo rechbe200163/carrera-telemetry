@@ -44,8 +44,6 @@ export default async function SessionDetailPage({
   const { id } = await params;
 
   const session = await getSessionById(Number(id));
-
-  // ✅ Früh raus, bevor du auf session.meeting_id zugreifst
   if (!session) {
     return (
       <div className='flex flex-col'>
