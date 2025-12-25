@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { FormState, initialState } from '@/lib/fom.types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -20,54 +20,61 @@ export function StartSessionForm({
   sessionType,
   hasEntries,
 }: StartSessionFormProps) {
+  const [error, setError] = useState<Record<string, string[]> | null>(null);
   const [formState, action, isPending] = useActionState<FormState, FormData>(
     startSessionAction.bind(null, Number(sessionId), sessionType),
     initialState
   );
 
-  const isRace = sessionType === 'RACE';
+  useEffect(() => {
+    if (formState.errors) {
+      setError(formState.errors ?? null);
+    }
+  }, [formState.errors]);
+
+  const isRace = sessionType === SessionType.RACE;
+  const isTimed =
+    sessionType === SessionType.PRACTICE ||
+    sessionType === SessionType.QUALYFING;
+  const isFun = sessionType === SessionType.FUN;
 
   return (
     <form action={action} className='space-y-4'>
       <div className='space-y-2'>
-        {isRace ? (
-          <>
-            <Label htmlFor='lapLimit' className='flex items-center gap-2'>
-              <RotateCcw className='h-4 w-4' />
-              Anzahl Runden
-            </Label>
-            <Input
-              id='lapLimit'
-              name='lapLimit'
-              type='number'
-              min={1}
-              placeholder='z.B. 71'
-              disabled={isPending}
-              className='font-mono'
-              required
-            />
-          </>
-        ) : (
-          <>
-            <Label
-              htmlFor='durationMinutes'
-              className='flex items-center gap-2'
-            >
-              <Clock className='h-4 w-4' />
-              Dauer in Minuten
-            </Label>
-            <Input
-              id='durationMinutes'
-              name='durationMinutes'
-              type='number'
-              min={1}
-              placeholder='z.B. 15'
-              disabled={isPending}
-              className='font-mono'
-              required
-            />
-          </>
-        )}
+        <div className='space-y-3'>
+          {/* Inputs */}
+          {isTimed && (
+            <div className='space-y-2'>
+              <div className='text-sm font-medium'>Dauer in Minuten</div>
+              <Input type='number' min={1} max={240} placeholder='z. B. 15' />
+            </div>
+          )}
+
+          {isRace && (
+            <div className='space-y-2'>
+              <div className='text-sm font-medium'>Rundenlimit</div>
+              <Input type='number' min={1} max={999} placeholder='z. B. 30' />
+            </div>
+          )}
+
+          {isFun && (
+            <div className='rounded-lg border border-border bg-secondary/20 p-3 text-sm text-muted-foreground'>
+              Test / Setup Session – kein Zeit- oder Rundenlimit. Du beendest
+              sie manuell.
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className='text-sm text-destructive'>
+              {Object.entries(error).map(([field, msgs]) => (
+                <div key={field}>
+                  <b>{field}:</b> {msgs.join(', ')}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {!hasEntries && (
