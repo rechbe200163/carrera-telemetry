@@ -9,6 +9,7 @@ import { StartSessionDto } from './dto/start-session.dto';
 import { SessionRuntimeService } from './session-runtime.service';
 import { SessionType, Stauts } from 'generated/prisma/enums';
 import { SessionLifecycleService } from './session-lifecycle.service';
+import { CreateSessionDto } from './dto/create-session.dto';
 
 @Injectable()
 export class SessionsService {
@@ -61,6 +62,10 @@ export class SessionsService {
           'no implementation for this session type',
         );
     }
+  }
+
+  async createSession(data: CreateSessionDto) {
+    return this.sessionsRepo.createSingleSession(data);
   }
 
   async abortSession(id: number) {

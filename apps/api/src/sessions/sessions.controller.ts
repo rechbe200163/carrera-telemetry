@@ -16,6 +16,7 @@ import {
   SessionsEventsService,
   SseEvent,
 } from './sessions-events.service';
+import { CreateSessionDto } from './dto/create-session.dto';
 
 @Controller('sessions')
 export class SessionsController {
@@ -43,6 +44,11 @@ export class SessionsController {
   @Post(':id/finish')
   async finish(@Param('id', ParseIntPipe) id: number) {
     return this.sessionsService.stopSession(id);
+  }
+
+  @Post('/fun')
+  async createSession(@Body() data: CreateSessionDto) {
+    return this.sessionsService.createSession(data);
   }
 
   @Get()
