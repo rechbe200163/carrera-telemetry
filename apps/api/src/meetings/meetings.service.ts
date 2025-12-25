@@ -26,4 +26,8 @@ export class MeetingsService {
       data,
     );
   }
+
+  createMeetingGenFunSessions(data: CreateMeetingDto, amount: number) {
+    return this.meetingsRepo.createMeetingGenFunSessions(data, amount);
+  }
 }

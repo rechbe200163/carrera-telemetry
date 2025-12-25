@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { MeetingsService } from './meetings.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
@@ -27,6 +29,22 @@ export class MeetingsController {
   ) {
     console.log(data, id);
     return this.meetingsService.createNextMeeting(id, data);
+  }
+
+  @ApiBody({
+    type: CreateMeetingDto,
+  })
+  @Post('/gen-fun')
+  createMeetingAndGenFunSessions(
+    @Query('amount', ParseIntPipe) amount: number = 3,
+    @Body() data: CreateMeetingDto,
+  ) {
+    if (amount >= 6)
+      throw new BadRequestException(
+        'only 5 FUN session can be created using this function ',
+      );
+    console.log(data, amount);
+    return this.meetingsService.createMeetingGenFunSessions(data, amount);
   }
 
   @Get()

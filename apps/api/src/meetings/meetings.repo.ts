@@ -50,6 +50,17 @@ export class MeetingsRepo {
     return meeting;
   }
 
+  async createMeetingGenFunSessions(data: CreateMeetingDto, amount: number) {
+    const meeting = await this.prisma.meetings.create({
+      data,
+    });
+    await this.sessionsRepo.createDefaultSessionsForFunMeeting(
+      meeting.id,
+      amount,
+    );
+    return meeting;
+  }
+
   async getById(id: number) {
     return this.prisma.meetings.findUnique({
       where: { id },
