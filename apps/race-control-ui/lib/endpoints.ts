@@ -109,8 +109,9 @@ export const ENDPOINTS = {
 
   MEETINGS: {
     POST: '/meetings',
-    POST_GEN_NEXT_MEETING: (id: number) =>
+    POST_GEN_CHAMPIONSHIP_MEETINGS: (id: number) =>
       `/meetings/gen-next/championship/${id}/meetings`,
+    POST_GEN_FUN_MEETINGS: `/meetings/gen-fun`,
     GET: '/meetings',
     GET_ID: (id: number) => `/meetings/${id}`,
     PATCH: (id: number) => `/meetings/${id}`,

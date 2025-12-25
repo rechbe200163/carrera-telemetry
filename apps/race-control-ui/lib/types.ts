@@ -1,6 +1,14 @@
 export type Status = 'PLANNED' | 'LIVE' | 'FINISHED' | 'CANCELLED';
 export type SessionType = 'FUN' | 'PRACTICE' | 'QUALYFING' | 'RACE';
 
+// enums
+export const SessionType = {
+  PRACTICE: 'PRACTICE',
+  FUN: 'FUN',
+  QUALYFING: 'QUALYFING',
+  RACE: 'RACE',
+} as const;
+
 // Models (field names kept like in your Prisma schema)
 export interface Championships {
   id: number;
