@@ -19,10 +19,9 @@ export async function createControllerAction(
   console.log(JSON.stringify(payload, null, 2));
 
   updateTag(CACHE_KEYS.controllers);
-  return apiClient.safePost<any, typeof payload>(
-    ENDPOINTS.CONTROLLERS.POST,
-    payload
-  );
+  return apiClient.safePost<any, typeof payload>(ENDPOINTS.CONTROLLERS.POST, {
+    body: payload,
+  });
 }
 
 export async function updateControllerAction(

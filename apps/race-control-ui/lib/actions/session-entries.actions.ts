@@ -28,7 +28,9 @@ export async function createSessionEntriesAction(
   updateTag(CACHE_KEYS.sessionEntries);
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.SESSION_ENTRIES.POST(sessionId),
-    payload
+    {
+      body: payload,
+    }
   );
 }
 

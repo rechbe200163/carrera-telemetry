@@ -18,10 +18,9 @@ export async function createChampionshipAction(
   console.log(JSON.stringify(payload, null, 2));
 
   updateTag(CACHE_KEYS.championships);
-  return apiClient.safePost<any, typeof payload>(
-    ENDPOINTS.CHAMPIONSHIPS.POST,
-    payload
-  );
+  return apiClient.safePost<any, typeof payload>(ENDPOINTS.CHAMPIONSHIPS.POST, {
+    body: payload,
+  });
 }
 
 export async function updateChampionshipAction(

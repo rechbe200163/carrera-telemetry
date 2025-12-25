@@ -19,6 +19,8 @@ export async function rebuildSessionResultsAction(
   updateTag(CACHE_KEYS.sessionResultsById(sessionId));
   return apiClient.safePost<any, typeof payload>(
     ENDPOINTS.SESSION_RESULTS.RENEW(sessionId),
-    payload
+    {
+      body: payload,
+    }
   );
 }

@@ -19,7 +19,9 @@ export async function createDriverAction(
   console.log(JSON.stringify(payload, null, 2));
 
   updateTag(CACHE_KEYS.drivers);
-  return apiClient.safePost<any, typeof payload>('/drivers', payload);
+  return apiClient.safePost<any, typeof payload>(ENDPOINTS.DRIVERS.GET, {
+    body: payload,
+  });
 }
 
 export async function updateDriverAction(

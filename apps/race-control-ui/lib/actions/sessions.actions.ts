@@ -45,7 +45,9 @@ export async function startSessionAction(
 
   const resp = await apiClient.safePost<any, typeof payload>(
     ENDPOINTS.SESSIONS.START(sessionId),
-    payload
+    {
+      body: payload,
+    }
   );
   if (resp.success) {
     updateTag(CACHE_KEYS.session(sessionId));
@@ -53,3 +55,38 @@ export async function startSessionAction(
   }
   return resp;
 }
+
+// export async function addFunSessionAction(
+//   sessionType: SessionType,
+//   _prevState: FormState,
+//   formData: FormData
+// ): Promise<FormState> {
+//   const isFun = sessionType !== 'FUN';
+//   if (!isFun) {
+//     return {
+//       success: false,
+//       errors: { title: ['not allowed SessionType for this action'] },
+//     };
+//   }
+
+//   const payload: {
+//     durationMinutes?: null;
+//     lapLimit?: null;
+//   } = {
+//     lapLimit: null,
+//     durationMinutes: null,
+//   };
+
+//   console.log(payload);
+
+//   const resp = await apiClient.safePost<any, typeof payload>(
+//     ENDPOINTS.SESSIONS.POST(payload),
+//     payload
+//   );
+//   if (resp.success) {
+//     console.log(resp.success ? 'started' : 'error');
+//   }
+//   return {
+//     success: true,
+//   };
+// }
