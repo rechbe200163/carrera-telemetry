@@ -15,6 +15,11 @@ export class ApiError extends Error {
   }
 }
 
+type RequestOptions<TBody = unknown> = {
+  body?: TBody;
+  query?: Record<string, any>;
+};
+
 export class ApiClient {
   constructor(private baseUrl: string = BASE_URL!) {}
 
@@ -22,13 +27,14 @@ export class ApiClient {
   private async request<TResponse, TBody = unknown>(
     path: string,
     method: string,
-    body?: TBody
+    body?: TBody,
+    query?: Record<string, any>
   ): Promise<TResponse> {
-    const resp = await fetch(`${this.baseUrl}${path}`, {
+    const queryString = this.buildQuery(query);
+
+    const resp = await fetch(`${this.baseUrl}${path}${queryString}`, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
       cache: 'no-store',
     });
@@ -68,15 +74,39 @@ export class ApiClient {
     return (await resp.json()) as TResponse;
   }
 
+  private buildQuery(query?: Record<string, any>): string {
+    if (!query) return '';
+
+    const params = new URLSearchParams();
+
+    Object.entries(query).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+
+      if (Array.isArray(value)) {
+        value.forEach((v) => params.append(key, String(v)));
+      } else {
+        params.append(key, String(value));
+      }
+    });
+
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
+  }
+
   // ---------------------------
   // Raw HTTP Methoden
   // ---------------------------
-  public get<TResponse>(path: string) {
-    return this.request<TResponse, void>(path, 'GET');
+  public get<TResponse>(path: string, opts?: { query?: Record<string, any> }) {
+    return this.request<TResponse, void>(path, 'GET', undefined, opts?.query);
   }
 
-  public post<TResponse, TBody>(path: string, body: TBody) {
-    return this.request<TResponse, TBody>(path, 'POST', body);
+  public post<TResponse, TBody>(path: string, opts?: RequestOptions<TBody>) {
+    return this.request<TResponse, TBody>(
+      path,
+      'POST',
+      opts?.body,
+      opts?.query
+    );
   }
 
   public patch<TResponse, TBody>(path: string, body: TBody) {
@@ -93,15 +123,15 @@ export class ApiClient {
 
   public async safePost<TResponse extends { id?: string | number }, TBody>(
     path: string,
-    body: TBody
+    opts?: RequestOptions<TBody>
   ): Promise<FormState> {
     try {
-      const data = await this.post<TResponse, TBody>(path, body);
+      const data = await this.post<TResponse, TBody>(path, opts);
 
       return {
         success: true,
         message: 'OK',
-        data: data?.id, // wenn dein Backend eine id zurückgibt
+        data: data?.id,
       };
     } catch (err) {
       return this.mapError(err);
@@ -109,15 +139,16 @@ export class ApiClient {
   }
 
   public async safeGet<TResponse extends { id?: string | number }>(
-    path: string
+    path: string,
+    opts?: { query?: Record<string, any> }
   ): Promise<FormState> {
     try {
-      const data = await this.get<TResponse>(path);
+      const data = await this.get<TResponse>(path, opts);
 
       return {
         success: true,
         message: 'OK',
-        data: data?.id, // bei GET z. B. /drivers/:id
+        data: data?.id,
       };
     } catch (err) {
       return this.mapError(err);
