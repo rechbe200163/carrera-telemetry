@@ -6,6 +6,7 @@ import { getAllSessions } from '@/lib/api/session-api.service';
 import { getAllMeetings } from '@/lib/api/meetings-api.service';
 import { getAllChampionships } from '@/lib/api/championship-api.service';
 import { StatusBadge } from '@/components/status-badge';
+import AddMeetingsForm from '@/components/forms/meetings/AddMeeting';
 
 export default async function MeetingsPage() {
   const sessions = await getAllSessions();
@@ -23,10 +24,7 @@ export default async function MeetingsPage() {
               Alle Rennwochenenden im Überblick
             </p>
           </div>
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            Neues Meeting
-          </Button>
+          <AddMeetingsForm isForChampioship={false} disabled={false} />
         </div>
 
         {/* Meetings List */}

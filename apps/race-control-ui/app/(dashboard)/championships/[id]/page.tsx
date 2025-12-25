@@ -35,7 +35,12 @@ export default async function ChampionshipDetailPage({
               Saison {championship.season}
             </p>
           </div>
-          <AddMeetingsForm championshipId={Number(id)} />
+          <AddMeetingsForm
+            championshipId={Number(id)}
+            disabled={
+              championship.held_meetings >= championship.planned_meetings
+            }
+          />
         </div>
 
         <div className='grid gap-6 lg:grid-cols-3'>
