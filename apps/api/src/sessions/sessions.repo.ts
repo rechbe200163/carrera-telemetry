@@ -1,6 +1,9 @@
-import { championships } from './../../generated/prisma/client';
-import { Injectable } from '@nestjs/common';
-import { Stauts } from 'generated/prisma/enums';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { SessionType, Stauts } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma.service';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { Session } from './entities/session.entity';
@@ -19,21 +22,21 @@ export class SessionsRepo {
       data: [
         {
           meeting_id: meetingId,
-          session_type: 'PRACTICE',
+          session_type: SessionType.PRACTICE,
           name: 'Practice',
-          status: 'PLANNED',
+          status: Stauts.PLANNED,
         },
         {
           meeting_id: meetingId,
-          session_type: 'QUALYFING',
+          session_type: SessionType.QUALYFING,
           name: 'Qualifying',
-          status: 'PLANNED',
+          status: Stauts.PLANNED,
         },
         {
           meeting_id: meetingId,
-          session_type: 'RACE',
+          session_type: SessionType.RACE,
           name: 'Race',
-          status: 'PLANNED',
+          status: Stauts.PLANNED,
         },
       ],
     });
@@ -43,30 +46,31 @@ export class SessionsRepo {
     sessionId: number,
     limits: { time_limit_seconds: number | null; lap_limit: number | null },
   ) {
-    return this.prisma.sessions.update({
-      where: { id: sessionId },
-      data: {
-        status: 'LIVE',
-        start_time: new Date(),
-        ...limits,
-      },
+    const res = await this.prisma.sessions.updateMany({
+      where: { id: sessionId, status: Stauts.PLANNED },
+      data: { status: Stauts.LIVE, start_time: new Date(), ...limits },
     });
+
+    if (res.count !== 1) throw new BadRequestException('Session not planned');
+    return this.findById(sessionId);
   }
 
   async finishSession(sessionId: number) {
-    return this.prisma.sessions.update({
-      where: { id: sessionId },
-      data: {
-        status: 'FINISHED',
-        end_time: new Date(),
-      },
+    const res = await this.prisma.sessions.updateMany({
+      where: { id: sessionId, status: Stauts.LIVE },
+      data: { status: Stauts.FINISHED, end_time: new Date() },
     });
+
+    if (res.count !== 1) throw new BadRequestException('Session not live');
+    return this.findById(sessionId);
   }
 
-  async findById(sessionId: number) {
-    return this.prisma.sessions.findUnique({
+  async findById(sessionId: number): Promise<Session> {
+    const session = await this.prisma.sessions.findUnique({
       where: { id: sessionId },
     });
+    if (!session) throw new NotFoundException('Sesssion with id not found');
+    return session;
   }
 
   async findAll() {
@@ -90,7 +94,8 @@ export class SessionsRepo {
 
   async getActiveSession() {
     return this.prisma.sessions.findFirst({
-      where: { status: 'LIVE' },
+      where: { status: Stauts.LIVE },
+      orderBy: { start_time: 'desc' },
       include: { meetings: true },
     });
   }
@@ -115,7 +120,7 @@ export class SessionsRepo {
     return this.prisma.sessions.update({
       where: { id: sessionId },
       data: {
-        status: 'CANCELLED',
+        status: Stauts.CANCELLED,
         end_time: new Date(),
       },
     });

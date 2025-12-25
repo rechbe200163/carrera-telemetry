@@ -3,27 +3,26 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { SessionsRepo } from './sessions.repo';
 import { StartSessionDto } from './dto/start-session.dto';
 import { SessionRuntimeService } from './session-runtime.service';
+import { SessionType, Stauts } from 'generated/prisma/enums';
+import { SessionLifecycleService } from './session-lifecycle.service';
 
 @Injectable()
 export class SessionsService {
   constructor(
     private readonly sessionsRepo: SessionsRepo,
-    private readonly mqttService: MqttService,
     private readonly sessionRuntimeService: SessionRuntimeService,
+    private readonly sessionLifeCycle: SessionLifecycleService,
   ) {}
 
   async startSession(sessionId: number, dto: StartSessionDto) {
     const session = await this.sessionsRepo.findById(sessionId);
-    if (!session) throw new NotFoundException();
-
     switch (session.session_type) {
-      case 'PRACTICE':
-      case 'QUALYFING':
+      case SessionType.PRACTICE:
+      case SessionType.QUALYFING:
         if (!dto.durationMinutes) {
           throw new BadRequestException(
             'durationMinutes required for practice/quali',
@@ -35,9 +34,9 @@ export class SessionsService {
           lap_limit: null,
         });
 
-        this.sessionRuntimeService.onSessionStart(sessionId);
+        await this.sessionRuntimeService.onSessionStart(sessionId);
         break;
-      case 'RACE':
+      case SessionType.RACE:
         if (!dto.lapLimit) {
           throw new BadRequestException('lapLimit required for race');
         }
@@ -47,12 +46,16 @@ export class SessionsService {
           lap_limit: dto.lapLimit,
         });
 
-        this.sessionRuntimeService.onSessionStart(sessionId);
+        await this.sessionRuntimeService.onSessionStart(sessionId);
         break;
-      case 'FUN':
-        throw new NotImplementedException(
-          'this functionality is yet to be implemented',
-        );
+      case SessionType.FUN:
+        await this.sessionsRepo.startSession(sessionId, {
+          time_limit_seconds: null,
+          lap_limit: null,
+        });
+
+        await this.sessionRuntimeService.onSessionStart(sessionId);
+        break;
       default:
         throw new BadRequestException(
           'no implementation for this session type',
@@ -61,9 +64,30 @@ export class SessionsService {
   }
 
   async abortSession(id: number) {
-    throw new NotImplementedException(
-      'this functionality is yet to be implemented',
-    );
+    const session = await this.sessionsRepo.findById(id);
+
+    if (session.status !== Stauts.LIVE && session.status !== Stauts.PLANNED) {
+      throw new BadRequestException('Session cannot be aborted');
+    }
+
+    await this.sessionsRepo.abortSession(id);
+    await this.sessionRuntimeService.cleanup(id);
+
+    return { ok: true };
+  }
+
+  async stopSession(id: number) {
+    const session = await this.sessionsRepo.findById(id);
+
+    if (session.status !== Stauts.LIVE) {
+      throw new BadRequestException('Session not live');
+    }
+
+    // danach: einheitlich alles abschließen (Stats, Events, Runtime cleanup)
+    // -> wenn finishSessionLifeCycle intern finishSession macht, dann NICHT doppelt machen
+    await this.sessionLifeCycle.finishSessionLifeCycle(id); // falls Lifecycle das nicht macht
+
+    return { ok: true };
   }
 
   async findByMeetingId(meetingId: number) {

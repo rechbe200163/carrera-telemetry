@@ -62,7 +62,7 @@ type FinishPhaseState = {
 
 type SessionRuntimeState = {
   sessionId: number;
-  meetingId: number;
+  meetingId: number | null;
   sessionType: SessionType;
   lapLimit: number | null;
   timeLimitSeconds: number | null;
@@ -250,7 +250,7 @@ export class SessionRuntimeService {
     }
 
     // -----------------------------------------------------------------------
-    // ZEITLIMIT (Practice/Qualy/Fun)
+    // ZEITLIMIT (Practice/Qualy)
     // -----------------------------------------------------------------------
 
     if (state.timeLimitSeconds !== null) {
@@ -420,8 +420,12 @@ export class SessionRuntimeService {
     const runtime = this.runtimeBySession.get(sessionId);
     const type = runtime?.sessionType;
 
-    // PRACTICE / QUALIFYING: nach Best Lap sortieren
-    if (type === SessionType.PRACTICE || type === SessionType.QUALYFING) {
+    // PRACTICE / QUALIFYING / FUN: nach Best Lap sortieren
+    if (
+      type === SessionType.PRACTICE ||
+      type === SessionType.QUALYFING ||
+      type === SessionType.FUN
+    ) {
       return [...drivers].sort((a, b) => {
         const aBest = a.bestLapMs ?? Number.MAX_SAFE_INTEGER;
         const bBest = b.bestLapMs ?? Number.MAX_SAFE_INTEGER;
@@ -433,7 +437,7 @@ export class SessionRuntimeService {
       });
     }
 
-    // RACE (und FUN): nach Runden und Total Time
+    // RACE: nach Runden und Total Time
     return [...drivers].sort((a, b) => {
       if (a.lapsCompleted !== b.lapsCompleted)
         return b.lapsCompleted - a.lapsCompleted;

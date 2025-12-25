@@ -2,9 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   SESSION_FINISHED_EVENT,
-  SESSION_STARTED_EVENT,
   SessionFinishedEvent,
-  SessionStartedEvent,
 } from 'src/events/events';
 import { SessionRuntimeService } from './session-runtime.service';
 import { SessionsEventsService } from './sessions-events.service';
