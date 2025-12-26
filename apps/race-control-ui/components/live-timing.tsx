@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Circle, Clock, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { SessionEntries, Sessions } from '@/lib/types';
+import { FinishSessionForm } from './forms/sessions/finish-session';
 
 type DriverRuntimeState = {
   driverId: number;
@@ -36,7 +37,11 @@ type LiveDriverRow = {
   bestLapTime: number | null;
   s1Time: number | null;
   s2Time: number | null;
-  currentLap: number;
+
+  // beide behalten, sonst wirst du später wahnsinnig
+  currentLap: number; // laufende Runde (lapsCompleted + 1)
+  lapsCompleted: number; // fertige Runden
+
   gapToLeaderMs: number | null;
   driver: {
     code: string;
@@ -197,13 +202,13 @@ export default function LiveTimingComonent({
         bestLapTime: d.bestLapMs,
         s1Time: d.sector1Ms,
         s2Time: d.sector2Ms,
-        currentLap: d.lapsCompleted,
+
+        // FIX: nicht lapsCompleted reinwerfen
+        currentLap: d.currentLap,
+        lapsCompleted: d.lapsCompleted,
+
         gapToLeaderMs: d.gapToLeaderMs,
-        driver: {
-          code,
-          name,
-          teamColor,
-        },
+        driver: { code, name, teamColor },
       };
     });
   }, [snapshot, sessionEntries]);
@@ -236,6 +241,11 @@ export default function LiveTimingComonent({
               <ArrowLeft className='h-5 w-5' />
             </Link>
           </Button>
+
+          {/* STOP / FINISH Button */}
+          <div className='min-w-[220px]'>
+            <FinishSessionForm session={session} />
+          </div>
         </div>
 
         <div className='flex items-center gap-8'>
@@ -401,10 +411,10 @@ export default function LiveTimingComonent({
                   </span>
                 </div>
 
-                {/* Laps */}
+                {/* Laps Completed */}
                 <div className='text-right'>
                   <span className='font-mono text-3xl font-black text-white/70'>
-                    {entry.currentLap}
+                    {entry.lapsCompleted}
                   </span>
                 </div>
               </div>
