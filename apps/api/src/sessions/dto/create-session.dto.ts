@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsNumber, IsString } from 'class-validator';
 import { SessionType } from 'generated/prisma/enums';
 
 export class CreateSessionDto {
@@ -24,6 +25,7 @@ export class CreateSessionDto {
     default: 1,
     type: Number,
   })
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   meetingId: number;
 }

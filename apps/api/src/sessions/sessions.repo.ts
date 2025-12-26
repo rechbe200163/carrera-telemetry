@@ -72,7 +72,8 @@ export class SessionsRepo {
       data: {
         meeting_id: data.meetingId,
         session_type: data.sessionType,
-        ...data,
+        name: data.name,
+        status: Stauts.PLANNED,
       },
     });
   }
