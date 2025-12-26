@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { getAllSessions } from '@/lib/api/session-api.service';
 import { getAllMeetings } from '@/lib/api/meetings-api.service';

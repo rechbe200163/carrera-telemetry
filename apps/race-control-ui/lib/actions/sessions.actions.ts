@@ -56,40 +56,51 @@ export async function startSessionAction(
   return resp;
 }
 
-// export async function addFunSessionAction(
-//   sessionType: SessionType,
-//   _prevState: FormState,
-//   formData: FormData
-// ): Promise<FormState> {
-//   const isFun = sessionType !== 'FUN';
-//   if (!isFun) {
-//     return {
-//       success: false,
-//       errors: { title: ['not allowed SessionType for this action'] },
-//     };
-//   }
+export async function addSessionAction(
+  meetingId: number,
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const isFun = formData.get('sessionType') === SessionType.FUN;
+  const sessionType = formData.get('sessionType') as SessionType;
+  const name = formData.get('name') as string;
+  if (!isFun) {
+    return {
+      success: false,
+      message: 'Only FUN sessions can be added via this form.',
+      errors: { title: ['not allowed SessionType for this action'] },
+    };
+  }
 
-//   const payload: {
-//     durationMinutes?: null;
-//     lapLimit?: null;
-//   } = {
-//     lapLimit: null,
-//     durationMinutes: null,
-//   };
+  const payload: {
+    durationMinutes?: null;
+    lapLimit?: null;
+    meetingId: number;
+    name: string;
+    sessionType: SessionType;
+  } = {
+    lapLimit: null,
+    durationMinutes: null,
+    meetingId: meetingId,
+    name: name,
+    sessionType: sessionType,
+  };
 
-//   console.log(payload);
+  console.log(payload);
 
-//   const resp = await apiClient.safePost<any, typeof payload>(
-//     ENDPOINTS.SESSIONS.POST(payload),
-//     payload
-//   );
-//   if (resp.success) {
-//     console.log(resp.success ? 'started' : 'error');
-//   }
-//   return {
-//     success: true,
-//   };
-// }
+  const resp = await apiClient.safePost<any, typeof payload>(
+    ENDPOINTS.SESSIONS.POST,
+    { body: payload }
+  );
+  if (resp.success) {
+    updateTag(CACHE_KEYS.sessions);
+    return {
+      success: true,
+      message: resp.message,
+    };
+  }
+  return resp;
+}
 
 export async function finishSessionAction(
   sessionId: number,
