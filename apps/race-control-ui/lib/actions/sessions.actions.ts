@@ -90,3 +90,21 @@ export async function startSessionAction(
 //     success: true,
 //   };
 // }
+
+export async function finishSessionAction(
+  sessionId: number,
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const payload: {} = {};
+  const resp = await apiClient.safePost<any, typeof payload>(
+    ENDPOINTS.SESSIONS.FINISH(sessionId),
+    {}
+  );
+  if (resp.success) {
+    redirect(`/sessions/${sessionId}/lap-stats`);
+  }
+  return {
+    success: true,
+  };
+}

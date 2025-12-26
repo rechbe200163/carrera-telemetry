@@ -79,6 +79,8 @@ export const ENDPOINTS = {
     PATCH: (id: number) => `/sessions/${id}`,
     DELETE: (id: number) => `/sessions/${id}`,
     GET_BY_MEETING_ID: (meetingId: number) => `/sessions/meeting/${meetingId}`,
+    FINISH: (id: number) => `/sessions/${id}/finish`,
+    ABORT: (id: number) => `/sessions/${id}/abort`,
   },
 
   // --- Session Entries (Driver/Controller Paarung) ---

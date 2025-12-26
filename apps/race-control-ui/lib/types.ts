@@ -9,6 +9,13 @@ export const SessionType = {
   RACE: 'RACE',
 } as const;
 
+export const Status = {
+  PLANNED: 'PLANNED',
+  LIVE: 'LIVE',
+  FINISHED: 'FINISHED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
 // Models (field names kept like in your Prisma schema)
 export interface Championships {
   id: number;
