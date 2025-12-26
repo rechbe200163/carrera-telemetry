@@ -6,6 +6,8 @@ import {
   Param,
   ParseIntPipe,
   Sse,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { StartSessionDto } from './dto/start-session.dto';
@@ -37,12 +39,14 @@ export class SessionsController {
   }
 
   @Post(':id/abort')
+  @HttpCode(HttpStatus.OK)
   async abort(@Param('id', ParseIntPipe) id: number) {
     return this.sessionsService.abortSession(id);
   }
 
   @Post(':id/finish')
-  async finish(@Param('id', ParseIntPipe) id: number) {
+  @HttpCode(HttpStatus.OK)
+  async finish(@Param('id', ParseIntPipe) id: number): Promise<number> {
     return this.sessionsService.stopSession(id);
   }
 

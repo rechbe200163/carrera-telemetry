@@ -1,8 +1,8 @@
-import { MqttService } from './../mqtt/mqtt.service';
 import {
   BadRequestException,
+  HttpCode,
+  HttpStatus,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { SessionsRepo } from './sessions.repo';
 import { StartSessionDto } from './dto/start-session.dto';
@@ -68,7 +68,7 @@ export class SessionsService {
     return this.sessionsRepo.createSingleSession(data);
   }
 
-  async abortSession(id: number) {
+  async abortSession(id: number): Promise<number> {
     const session = await this.sessionsRepo.findById(id);
 
     if (session.status !== Stauts.LIVE && session.status !== Stauts.PLANNED) {
@@ -78,10 +78,10 @@ export class SessionsService {
     await this.sessionsRepo.abortSession(id);
     await this.sessionRuntimeService.cleanup(id);
 
-    return { ok: true };
+    return HttpStatus.OK;
   }
 
-  async stopSession(id: number) {
+  async stopSession(id: number): Promise<number> {
     const session = await this.sessionsRepo.findById(id);
 
     if (session.status !== Stauts.LIVE) {
@@ -92,7 +92,7 @@ export class SessionsService {
     // -> wenn finishSessionLifeCycle intern finishSession macht, dann NICHT doppelt machen
     await this.sessionLifeCycle.finishSessionLifeCycle(id); // falls Lifecycle das nicht macht
 
-    return { ok: true };
+    return HttpStatus.OK;
   }
 
   async findByMeetingId(meetingId: number) {
