@@ -3,7 +3,7 @@
 import { useActionState } from 'react';
 import { FormState, initialState } from '@/lib/fom.types';
 import { Button } from '@/components/ui/button';
-import { Play } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import { finishSessionAction } from '@/lib/actions/sessions.actions';
 import { Sessions, Status } from '@/lib/types';
 
@@ -36,7 +36,7 @@ export function FinishSessionForm({ session }: StartSessionFormProps) {
         className='w-full'
         disabled={isPending || !isFinishable}
       >
-        <Play className='mr-2 h-4 w-4' />
+        <Pause className='mr-2 h-4 w-4' />
         {isPending ? 'Stoppen' : 'Session stoppen'}
       </Button>
     </form>
