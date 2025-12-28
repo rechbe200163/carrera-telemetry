@@ -46,20 +46,32 @@ export function StartSessionForm({
           {isTimed && (
             <div className='space-y-2'>
               <div className='text-sm font-medium'>Dauer in Minuten</div>
-              <Input type='number' min={1} max={240} placeholder='z. B. 15' />
+              <Input
+                name='durationMinutes'
+                type='number'
+                min={1}
+                max={240}
+                placeholder='z. B. 15'
+              />
             </div>
           )}
 
           {isRace && (
             <div className='space-y-2'>
               <div className='text-sm font-medium'>Rundenlimit</div>
-              <Input type='number' min={1} max={999} placeholder='z. B. 30' />
+              <Input
+                name='lapLimit'
+                type='number'
+                min={1}
+                max={999}
+                placeholder='z. B. 30'
+              />
             </div>
           )}
 
           {isFun && (
             <div className='rounded-lg border border-border bg-secondary/20 p-3 text-sm text-muted-foreground'>
-              Test / Setup Session – kein Zeit- oder Rundenlimit. Du beendest
+              Test / Setup Session - kein Zeit- oder Rundenlimit. Du beendest
               sie manuell.
             </div>
           )}
