@@ -122,6 +122,16 @@ export class LapEventsConsumer implements OnModuleInit {
     if (eventType === 'lap') {
       const lapPayload = payload as LapPayload;
 
+      if (
+        !this.sessionRuntime.shouldAcceptLap({
+          sessionId: this.activeSessionId,
+          driverId,
+          lapNumber: lapPayload.lapNumber,
+        })
+      ) {
+        return;
+      }
+
       await this.lapsRepo.create({
         session_id: this.activeSessionId,
         driver_id: driverId,

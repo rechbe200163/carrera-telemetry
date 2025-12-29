@@ -93,7 +93,7 @@ export class SessionRuntimeService {
 
   // Tuning: kann man später configbar machen
   private readonly FINISH_GRACE_MS = 800;
-  private readonly FINISH_INACTIVITY_TIMEOUT_MS = 8000;
+  private readonly FINISH_INACTIVITY_TIMEOUT_MS = 30000;
 
   constructor(
     private readonly sessionsRepo: SessionsRepo,
@@ -329,6 +329,27 @@ export class SessionRuntimeService {
   // interne Helfer
   // ---------------------------------------------------------------------------
 
+  shouldAcceptLap(args: {
+    sessionId: number;
+    driverId: number;
+    lapNumber: number;
+  }): boolean {
+    const state = this.runtimeBySession.get(args.sessionId);
+    if (!state) return false;
+
+    if (state.sessionType !== SessionType.RACE) return true;
+    if (state.lapLimit == null) return true;
+
+    if (args.lapNumber > state.lapLimit) {
+      this.logger.log(
+        `Session ${args.sessionId}: ignoring lap ${args.lapNumber} from driver=${args.driverId} (lapLimit=${state.lapLimit})`,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
   private ensureDriverState(
     sessionId: number,
     driverId: number,
@@ -502,8 +523,18 @@ export class SessionRuntimeService {
     for (const d of driversMap.values()) {
       if (d.lapsCompleted >= state.lapLimit) continue;
 
+      // Wer beim Trigger >1 Runde zuruecklag, wird nicht mehr erwartet.
+      if (fp.leaderLapAtTrigger - d.lapsCompleted > 1) {
+        continue;
+      }
+
+      const inactivityTimeoutMs = Math.max(
+        fp.inactivityTimeoutMs,
+        (d.lastLapMs ?? 0) * 2,
+      );
+
       // kein progress -> als finished behandeln
-      if (nowMs - d.lastProgressAtMs > fp.inactivityTimeoutMs) {
+      if (nowMs - d.lastProgressAtMs > inactivityTimeoutMs) {
         continue;
       }
 
