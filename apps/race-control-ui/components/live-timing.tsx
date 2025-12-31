@@ -366,7 +366,7 @@ export default function LiveTimingComonent({
                 {/* Last Lap */}
                 <div className='text-right'>
                   <span
-                    className={`font-mono text-3xl font-black tracking-tight ${
+                    className={`font-mono text-[44px] leading-none font-black tracking-tight ${
                       isPersonalBest ? 'text-green-400' : 'text-white'
                     }`}
                   >
@@ -377,7 +377,7 @@ export default function LiveTimingComonent({
                 {/* Best Lap */}
                 <div className='text-right flex items-center justify-end gap-3'>
                   <span
-                    className={`font-mono text-3xl font-bold tracking-tight ${
+                    className={`font-mono text-[32px] leading-none font-bold ${
                       hasFastestLap ? 'text-purple-400' : 'text-white/50'
                     }`}
                   >
@@ -406,14 +406,14 @@ export default function LiveTimingComonent({
 
                 {/* Gap */}
                 <div className='text-right'>
-                  <span className='font-mono text-2xl font-bold text-white/70'>
+                  <span className='font-mono text-[28px] leading-none font-bold text-white/70'>
                     {formatGap(entry.gapToLeaderMs)}
                   </span>
                 </div>
 
                 {/* Laps Completed */}
                 <div className='text-right'>
-                  <span className='font-mono text-3xl font-black text-white/70'>
+                  <span className='font-mono text-5xl font-black text-white/70'>
                     {entry.lapsCompleted}
                   </span>
                 </div>
